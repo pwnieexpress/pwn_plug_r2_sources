@@ -1,0 +1,38 @@
+From f776b89f14c57f89a21110b8e78d9dafe71ae80d Mon Sep 17 00:00:00 2001
+From: Stanislaw Gruszka <sgruszka@redhat.com>
+Date: Mon, 10 Jan 2011 13:38:21 +0100
+Subject: [PATCH 355/984] mac80211: fix hard lockup in
+ sta_addba_resp_timer_expired
+
+Problem is 2.6.35 specific, bug was introduced in backport
+of upstream 44271488b91c9eecf249e075a1805dd887e222d2 commit.
+
+We can not call del_timer_sync(addba_resp_timer) from
+___ieee80211_stop_tx_ba_session(), as this function can be called from
+that timer callback. To fix, simply use not synchronous del_timer().
+
+Resolve https://bugzilla.redhat.com/show_bug.cgi?id=667459
+
+Reported-and-tested-by: Mathieu Chouquet-Stringer <mathieu-acct@csetco.com>
+Signed-off-by: Stanislaw Gruszka <sgruszka@redhat.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/mac80211/agg-tx.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/mac80211/agg-tx.c b/net/mac80211/agg-tx.c
+index f935490..72ab63d 100644
+--- a/net/mac80211/agg-tx.c
++++ b/net/mac80211/agg-tx.c
+@@ -138,7 +138,7 @@ int ___ieee80211_stop_tx_ba_session(struct sta_info *sta, u16 tid,
+ 	       sta->sta.addr, tid);
+ #endif /* CONFIG_MAC80211_HT_DEBUG */
+ 
+-	del_timer_sync(&tid_tx->addba_resp_timer);
++	del_timer(&tid_tx->addba_resp_timer);
+ 
+ 	state = &sta->ampdu_mlme.tid_state_tx[tid];
+ 
+-- 
+1.8.1.5
+

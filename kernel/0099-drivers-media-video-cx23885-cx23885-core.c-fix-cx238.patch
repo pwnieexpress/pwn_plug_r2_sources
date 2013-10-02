@@ -1,0 +1,36 @@
+From e945dc312ad16872c7094990fd390ec0c3b5a6a0 Mon Sep 17 00:00:00 2001
+From: Andrew Morton <akpm@linux-foundation.org>
+Date: Fri, 1 Oct 2010 18:13:41 -0300
+Subject: [PATCH 099/984] drivers/media/video/cx23885/cx23885-core.c: fix
+ cx23885_dev_checkrevision()
+
+commit abe1def46d84aa27d3f84d729204b162e8c64d76 upstream.
+
+It was missing the `break'.
+
+Addresses https://bugzilla.kernel.org/show_bug.cgi?id=18672
+
+Reported-by: Igor <i2g2r2@gmail.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Mauro Carvalho Chehab <mchehab@redhat.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/media/video/cx23885/cx23885-core.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/media/video/cx23885/cx23885-core.c b/drivers/media/video/cx23885/cx23885-core.c
+index 0dde57e..fb67433 100644
+--- a/drivers/media/video/cx23885/cx23885-core.c
++++ b/drivers/media/video/cx23885/cx23885-core.c
+@@ -737,6 +737,7 @@ static void cx23885_dev_checkrevision(struct cx23885_dev *dev)
+ 	case 0x0e:
+ 		/* CX23887-15Z */
+ 		dev->hwrevision = 0xc0;
++		break;
+ 	case 0x0f:
+ 		/* CX23887-14Z */
+ 		dev->hwrevision = 0xb1;
+-- 
+1.8.1.5
+

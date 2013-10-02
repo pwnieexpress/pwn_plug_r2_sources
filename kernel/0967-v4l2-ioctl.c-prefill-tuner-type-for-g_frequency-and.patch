@@ -1,0 +1,59 @@
+From 362a03ca4747dbbb67758e54df3d2fff6936e984 Mon Sep 17 00:00:00 2001
+From: Hans Verkuil <hans.verkuil@cisco.com>
+Date: Sun, 12 Jun 2011 06:36:41 -0300
+Subject: [PATCH 967/984] v4l2-ioctl.c: prefill tuner type for g_frequency and
+
+[ upstream commit 227690df75382e46a4f6ea1bbc5df855a674b47f ]
+ g/s_tuner
+
+The subdevs are supposed to receive a valid tuner type for the g_frequency
+and g/s_tuner subdev ops. Some drivers do this, others don't. So prefill
+this in v4l2-ioctl.c based on whether the device node from which this is
+called is a radio node or not.
+
+The spec does not require applications to fill in the type, and if they
+leave it at 0 then the 'check_mode' call in tuner-core.c will return
+an error and the ioctl does nothing.
+
+Cc: stable@kernel.org
+Signed-off-by: Hans Verkuil <hans.verkuil@cisco.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab@redhat.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/media/video/v4l2-ioctl.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/media/video/v4l2-ioctl.c b/drivers/media/video/v4l2-ioctl.c
+index 0eeceae..4ee6d53 100644
+--- a/drivers/media/video/v4l2-ioctl.c
++++ b/drivers/media/video/v4l2-ioctl.c
+@@ -1644,6 +1644,8 @@ static long __video_do_ioctl(struct file *file,
+ 		if (!ops->vidioc_g_tuner)
+ 			break;
+ 
++		p->type = (vfd->vfl_type == VFL_TYPE_RADIO) ?
++			V4L2_TUNER_RADIO : V4L2_TUNER_ANALOG_TV;
+ 		ret = ops->vidioc_g_tuner(file, fh, p);
+ 		if (!ret)
+ 			dbgarg(cmd, "index=%d, name=%s, type=%d, "
+@@ -1662,6 +1664,8 @@ static long __video_do_ioctl(struct file *file,
+ 
+ 		if (!ops->vidioc_s_tuner)
+ 			break;
++		p->type = (vfd->vfl_type == VFL_TYPE_RADIO) ?
++			V4L2_TUNER_RADIO : V4L2_TUNER_ANALOG_TV;
+ 		dbgarg(cmd, "index=%d, name=%s, type=%d, "
+ 				"capability=0x%x, rangelow=%d, "
+ 				"rangehigh=%d, signal=%d, afc=%d, "
+@@ -1680,6 +1684,8 @@ static long __video_do_ioctl(struct file *file,
+ 		if (!ops->vidioc_g_frequency)
+ 			break;
+ 
++		p->type = (vfd->vfl_type == VFL_TYPE_RADIO) ?
++			V4L2_TUNER_RADIO : V4L2_TUNER_ANALOG_TV;
+ 		ret = ops->vidioc_g_frequency(file, fh, p);
+ 		if (!ret)
+ 			dbgarg(cmd, "tuner=%d, type=%d, frequency=%d\n",
+-- 
+1.8.1.5
+

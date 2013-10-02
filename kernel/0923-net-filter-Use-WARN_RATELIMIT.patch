@@ -1,0 +1,38 @@
+From 7666ff7ed41d95540caa91717aad005578230a85 Mon Sep 17 00:00:00 2001
+From: Joe Perches <joe@perches.com>
+Date: Sat, 21 May 2011 07:48:40 +0000
+Subject: [PATCH 923/984] net: filter: Use WARN_RATELIMIT
+
+[ Upstream commit 6c4a5cb219520c7bc937ee186ca53f03733bd09f ]
+
+A mis-configured filter can spam the logs with lots of stack traces.
+
+Rate-limit the warnings and add printout of the bogus filter information.
+
+Original-patch-by: Ben Greear <greearb@candelatech.com>
+Signed-off-by: Joe Perches <joe@perches.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/core/filter.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/net/core/filter.c b/net/core/filter.c
+index 71a433c..84df737 100644
+--- a/net/core/filter.c
++++ b/net/core/filter.c
+@@ -292,7 +292,9 @@ load_b:
+ 			mem[f_k] = X;
+ 			continue;
+ 		default:
+-			WARN_ON(1);
++			WARN_RATELIMIT(1, "Unknown code:%u jt:%u tf:%u k:%u\n",
++				       fentry->code, fentry->jt,
++				       fentry->jf, fentry->k);
+ 			return 0;
+ 		}
+ 
+-- 
+1.8.1.5
+

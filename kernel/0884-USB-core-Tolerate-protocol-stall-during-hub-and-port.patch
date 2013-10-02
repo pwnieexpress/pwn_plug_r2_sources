@@ -1,0 +1,48 @@
+From 98f5adc2ba1389a46cdf0037deb823a672656626 Mon Sep 17 00:00:00 2001
+From: Libor Pechacek <lpechacek@suse.cz>
+Date: Fri, 20 May 2011 14:53:25 +0200
+Subject: [PATCH 884/984] USB: core: Tolerate protocol stall during hub and
+ port status read
+
+commit 3824c1ddaf744be44b170a335332b9d6afe79254 upstream.
+
+Protocol stall should not be fatal while reading port or hub status as it is
+transient state.  Currently hub EP0 STALL during port status read results in
+failed device enumeration.  This has been observed with ST-Ericsson (formerly
+Philips) USB 2.0 Hub (04cc:1521) after connecting keyboard.
+
+Signed-off-by: Libor Pechacek <lpechacek@suse.cz>
+Acked-by: Alan Stern <stern@rowland.harvard.edu>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/usb/core/hub.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/usb/core/hub.c b/drivers/usb/core/hub.c
+index d4041c6..d9cdc4a 100644
+--- a/drivers/usb/core/hub.c
++++ b/drivers/usb/core/hub.c
+@@ -327,7 +327,8 @@ static int get_hub_status(struct usb_device *hdev,
+ {
+ 	int i, status = -ETIMEDOUT;
+ 
+-	for (i = 0; i < USB_STS_RETRIES && status == -ETIMEDOUT; i++) {
++	for (i = 0; i < USB_STS_RETRIES &&
++			(status == -ETIMEDOUT || status == -EPIPE); i++) {
+ 		status = usb_control_msg(hdev, usb_rcvctrlpipe(hdev, 0),
+ 			USB_REQ_GET_STATUS, USB_DIR_IN | USB_RT_HUB, 0, 0,
+ 			data, sizeof(*data), USB_STS_TIMEOUT);
+@@ -343,7 +344,8 @@ static int get_port_status(struct usb_device *hdev, int port1,
+ {
+ 	int i, status = -ETIMEDOUT;
+ 
+-	for (i = 0; i < USB_STS_RETRIES && status == -ETIMEDOUT; i++) {
++	for (i = 0; i < USB_STS_RETRIES &&
++			(status == -ETIMEDOUT || status == -EPIPE); i++) {
+ 		status = usb_control_msg(hdev, usb_rcvctrlpipe(hdev, 0),
+ 			USB_REQ_GET_STATUS, USB_DIR_IN | USB_RT_PORT, 0, port1,
+ 			data, sizeof(*data), USB_STS_TIMEOUT);
+-- 
+1.8.1.5
+

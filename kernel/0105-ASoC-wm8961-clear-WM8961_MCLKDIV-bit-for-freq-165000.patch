@@ -1,0 +1,39 @@
+From 4d21e4b72b282e24fdf6a1993ef21730df94fe86 Mon Sep 17 00:00:00 2001
+From: Axel Lin <axel.lin@gmail.com>
+Date: Wed, 24 Nov 2010 10:21:54 +0800
+Subject: [PATCH 105/984] ASoC: wm8961 - clear WM8961_MCLKDIV bit for freq <=
+ 16500000
+
+commit 2f7dceeda4708f470fd927adb3861bd8ebbe2310 upstream.
+
+MCLKDIV bit of Register 04h Clocking1:
+	0 : Divide by 1
+	1 : Divide by 2
+
+Thus in the case of freq <= 16500000, we should clear MCLKDIV bit.
+
+Signed-off-by: Axel Lin <axel.lin@gmail.com>
+Acked-by: Liam Girdwood <lrg@slimlogic.co.uk>
+Signed-off-by: Mark Brown <broonie@opensource.wolfsonmicro.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ sound/soc/codecs/wm8961.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sound/soc/codecs/wm8961.c b/sound/soc/codecs/wm8961.c
+index 4cda28d..3499c78 100644
+--- a/sound/soc/codecs/wm8961.c
++++ b/sound/soc/codecs/wm8961.c
+@@ -736,7 +736,7 @@ static int wm8961_set_sysclk(struct snd_soc_dai *dai, int clk_id,
+ 		freq /= 2;
+ 	} else {
+ 		dev_dbg(codec->dev, "Using MCLK/1 for %dHz MCLK\n", freq);
+-		reg &= WM8961_MCLKDIV;
++		reg &= ~WM8961_MCLKDIV;
+ 	}
+ 
+ 	snd_soc_write(codec, WM8961_CLOCKING1, reg);
+-- 
+1.8.1.5
+

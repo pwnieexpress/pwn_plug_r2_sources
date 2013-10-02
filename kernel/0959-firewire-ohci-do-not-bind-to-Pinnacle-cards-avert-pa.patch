@@ -1,0 +1,49 @@
+From 723df54958132696b5d203b6d8b9c914744983c2 Mon Sep 17 00:00:00 2001
+From: Stefan Richter <stefanr@s5r6.in-berlin.de>
+Date: Sun, 10 Jul 2011 00:23:03 +0200
+Subject: [PATCH 959/984] firewire: ohci: do not bind to Pinnacle cards, avert
+ panic
+
+[ upstream commit 7f7e37115a8b6724f26d0637a04e1d35e3c59717 ]
+
+When firewire-ohci is bound to a Pinnacle MovieBoard, eventually a
+"Register access failure" is logged and an interrupt storm or a kernel
+panic happens.  https://bugzilla.kernel.org/show_bug.cgi?id=36622
+
+Until this is sorted out (if that is going to succeed at all), let's
+just prevent firewire-ohci from touching these devices.
+
+Signed-off-by: Stefan Richter <stefanr@s5r6.in-berlin.de>
+Cc: <stable@kernel.org>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/firewire/ohci.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/firewire/ohci.c b/drivers/firewire/ohci.c
+index 0942efb..0ccc73c 100644
+--- a/drivers/firewire/ohci.c
++++ b/drivers/firewire/ohci.c
+@@ -232,6 +232,7 @@ static inline struct fw_ohci *fw_ohci(struct fw_card *card)
+ static char ohci_driver_name[] = KBUILD_MODNAME;
+ 
+ #define PCI_DEVICE_ID_TI_TSB12LV22	0x8009
++#define PCI_VENDOR_ID_PINNACLE_SYSTEMS	0x11bd
+ 
+ #define QUIRK_CYCLE_TIMER		1
+ #define QUIRK_RESET_PACKET		2
+@@ -2480,6 +2481,11 @@ static int __devinit pci_probe(struct pci_dev *dev,
+ 	int i, err, n_ir, n_it;
+ 	size_t size;
+ 
++	if (dev->vendor == PCI_VENDOR_ID_PINNACLE_SYSTEMS) {
++		dev_err(&dev->dev, "Pinnacle MovieBoard is not yet supported\n");
++		return -ENOSYS;
++	}
++
+ 	ohci = kzalloc(sizeof(*ohci), GFP_KERNEL);
+ 	if (ohci == NULL) {
+ 		err = -ENOMEM;
+-- 
+1.8.1.5
+

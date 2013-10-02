@@ -1,0 +1,48 @@
+From 86b7b580a603f3ecd18e3b19e5d9dc2eb7c458dc Mon Sep 17 00:00:00 2001
+From: Jeff Layton <jlayton@redhat.com>
+Date: Wed, 27 Apr 2011 11:49:09 -0400
+Subject: [PATCH 757/984] nfs: don't lose MS_SYNCHRONOUS on remount of noac
+ mount
+
+commit 26c4c170731f00008f4317a2888a0a07ac99d90d upstream.
+
+On a remount, the VFS layer will clear the MS_SYNCHRONOUS bit on the
+assumption that the flags on the mount syscall will have it set if the
+remounted fs is supposed to keep it.
+
+In the case of "noac" though, MS_SYNCHRONOUS is implied. A remount of
+such a mount will lose the MS_SYNCHRONOUS flag since "sync" isn't part
+of the mount options.
+
+Reported-by: Max Matveev <makc@redhat.com>
+Signed-off-by: Jeff Layton <jlayton@redhat.com>
+Signed-off-by: Trond Myklebust <Trond.Myklebust@netapp.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ fs/nfs/super.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/fs/nfs/super.c b/fs/nfs/super.c
+index 381d929..f9fce46 100644
+--- a/fs/nfs/super.c
++++ b/fs/nfs/super.c
+@@ -2001,6 +2001,15 @@ nfs_remount(struct super_block *sb, int *flags, char *raw_data)
+ 	if (error < 0)
+ 		goto out;
+ 
++	/*
++	 * noac is a special case. It implies -o sync, but that's not
++	 * necessarily reflected in the mtab options. do_remount_sb
++	 * will clear MS_SYNCHRONOUS if -o sync wasn't specified in the
++	 * remount options, so we have to explicitly reset it.
++	 */
++	if (data->flags & NFS_MOUNT_NOAC)
++		*flags |= MS_SYNCHRONOUS;
++
+ 	/* compare new mount options with old ones */
+ 	error = nfs_compare_remount_data(nfss, data);
+ out:
+-- 
+1.8.1.5
+

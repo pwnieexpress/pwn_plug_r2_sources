@@ -1,0 +1,41 @@
+From 3cc36915ad70bb028e8b4f748ed4a4e99834e3c0 Mon Sep 17 00:00:00 2001
+From: Shaohua Li <shaohua.li@intel.com>
+Date: Mon, 27 Jun 2011 09:03:47 +0200
+Subject: [PATCH 911/984] cfq-iosched: fix a rcu warning
+
+commit 3181faa85bda3dc3f5e630a1846526c9caaa38e3 upstream.
+
+I got a rcu warnning at boot. the ioc->ioc_data is rcu_deferenced, but
+doesn't hold rcu_read_lock.
+
+Signed-off-by: Shaohua Li <shaohua.li@intel.com>
+Signed-off-by: Jens Axboe <jaxboe@fusionio.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ block/cfq-iosched.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/block/cfq-iosched.c b/block/cfq-iosched.c
+index 46b8894..803ad8b 100644
+--- a/block/cfq-iosched.c
++++ b/block/cfq-iosched.c
+@@ -2615,11 +2615,14 @@ static void __cfq_exit_single_io_context(struct cfq_data *cfqd,
+ 	smp_wmb();
+ 	cic->key = cfqd_dead_key(cfqd);
+ 
++	rcu_read_lock();
+ 	if (rcu_dereference(ioc->ioc_data) == cic) {
++		rcu_read_unlock();
+ 		spin_lock(&ioc->lock);
+ 		rcu_assign_pointer(ioc->ioc_data, NULL);
+ 		spin_unlock(&ioc->lock);
+-	}
++	} else
++		rcu_read_unlock();
+ 
+ 	if (cic->cfqq[BLK_RW_ASYNC]) {
+ 		cfq_exit_cfqq(cfqd, cic->cfqq[BLK_RW_ASYNC]);
+-- 
+1.8.1.5
+

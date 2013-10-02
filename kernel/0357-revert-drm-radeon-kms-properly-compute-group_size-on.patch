@@ -1,0 +1,76 @@
+From be9627d438a0bbad74b10fa58cc87b9869de33e6 Mon Sep 17 00:00:00 2001
+From: Steve Conklin <sconklin@canonical.com>
+Date: Sun, 6 Feb 2011 11:04:06 -0800
+Subject: [PATCH 357/984] 
+ revert-drm-radeon-kms-properly-compute-group_size-on-6xx-7xx
+
+Revert drm/radeon/kms: properly compute group_size on 6xx/7xx
+
+From: Steve Conklin <sconklin@canonical.com>
+
+We discovered a regression for Radeon users in our latest proposed
+kernel for 2.6.35 (Maverick), and have isolated it to this patch:
+
+http://git.kernel.org/?p=linux/kernel/git/longterm/linux-2.6.35.y.git;a=commit;h=b8e9a4a45f8427837f4dba89
++bda4d4e3f3a5c726
+
+We took that patch as part of 2.6.35.10, and one of our testers has
+reported that our build of that kernel also exhibits the problem.
+
+These are mainline kernels built with the Ubuntu configs.
+http://kernel.ubuntu.com/~kernel-ppa/mainline/v2.6.35.10-maverick/
+
+Our bug report is here:
+https://bugs.launchpad.net/ubuntu/+source/linux/+bug/703553
+
+Upstream bug report:
+
+https://bugzilla.kernel.org/show_bug.cgi?id=24802
+
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/gpu/drm/radeon/r600.c  | 7 ++-----
+ drivers/gpu/drm/radeon/rv770.c | 9 ++++-----
+ 2 files changed, 6 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/gpu/drm/radeon/r600.c b/drivers/gpu/drm/radeon/r600.c
+index cdddc4d..abc2a66 100644
+--- a/drivers/gpu/drm/radeon/r600.c
++++ b/drivers/gpu/drm/radeon/r600.c
+@@ -1597,11 +1597,8 @@ void r600_gpu_init(struct radeon_device *rdev)
+ 	rdev->config.r600.tiling_npipes = rdev->config.r600.max_tile_pipes;
+ 	rdev->config.r600.tiling_nbanks = 4 << ((ramcfg & NOOFBANK_MASK) >> NOOFBANK_SHIFT);
+ 	tiling_config |= BANK_TILING((ramcfg & NOOFBANK_MASK) >> NOOFBANK_SHIFT);
+-	tiling_config |= GROUP_SIZE((ramcfg & BURSTLENGTH_MASK) >> BURSTLENGTH_SHIFT);
+-	if ((ramcfg & BURSTLENGTH_MASK) >> BURSTLENGTH_SHIFT)
+-		rdev->config.r600.tiling_group_size = 512;
+-	else
+-		rdev->config.r600.tiling_group_size = 256;
++	tiling_config |= GROUP_SIZE(0);
++	rdev->config.r600.tiling_group_size = 256;
+ 	tmp = (ramcfg & NOOFROWS_MASK) >> NOOFROWS_SHIFT;
+ 	if (tmp > 3) {
+ 		tiling_config |= ROW_TILING(3);
+diff --git a/drivers/gpu/drm/radeon/rv770.c b/drivers/gpu/drm/radeon/rv770.c
+index 082c380..67e8073 100644
+--- a/drivers/gpu/drm/radeon/rv770.c
++++ b/drivers/gpu/drm/radeon/rv770.c
+@@ -627,11 +627,10 @@ static void rv770_gpu_init(struct radeon_device *rdev)
+ 	else
+ 		gb_tiling_config |= BANK_TILING((mc_arb_ramcfg & NOOFBANK_MASK) >> NOOFBANK_SHIFT);
+ 	rdev->config.rv770.tiling_nbanks = 4 << ((gb_tiling_config >> 4) & 0x3);
+-	gb_tiling_config |= GROUP_SIZE((mc_arb_ramcfg & BURSTLENGTH_MASK) >> BURSTLENGTH_SHIFT);
+-	if ((mc_arb_ramcfg & BURSTLENGTH_MASK) >> BURSTLENGTH_SHIFT)
+-		rdev->config.rv770.tiling_group_size = 512;
+-	else
+-		rdev->config.rv770.tiling_group_size = 256;
++
++	gb_tiling_config |= GROUP_SIZE(0);
++	rdev->config.rv770.tiling_group_size = 256;
++
+ 	if (((mc_arb_ramcfg & NOOFROWS_MASK) >> NOOFROWS_SHIFT) > 3) {
+ 		gb_tiling_config |= ROW_TILING(3);
+ 		gb_tiling_config |= SAMPLE_SPLIT(3);
+-- 
+1.8.1.5
+

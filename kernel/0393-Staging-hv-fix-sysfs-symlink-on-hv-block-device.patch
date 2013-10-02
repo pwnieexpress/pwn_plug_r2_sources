@@ -1,0 +1,35 @@
+From ddad244f7a8d7ac810cefe919a750383d4dc7ff6 Mon Sep 17 00:00:00 2001
+From: Ky Srinivasan <ksrinivasan@novell.com>
+Date: Thu, 16 Dec 2010 18:59:19 -0700
+Subject: [PATCH 393/984] Staging: hv: fix sysfs symlink on hv block device
+
+commit 268eff909afaca93188d2d14554cbf824f6a0e41 upstream.
+
+The block device does not create the proper symlink in sysfs because we
+forgot to set up the gendisk structure properly.  This patch fixes the
+issue.
+
+Signed-off-by: K. Y. Srinivasan <ksrinivasan@novell.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+Cc: Hank Janssen <hjanssen@microsoft.com>
+Cc: Haiyang Zhang <haiyangz@microsoft.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+ drivers/staging/hv/blkvsc_drv.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/staging/hv/blkvsc_drv.c b/drivers/staging/hv/blkvsc_drv.c
+index 61bd0be..1886bc0 100644
+--- a/drivers/staging/hv/blkvsc_drv.c
++++ b/drivers/staging/hv/blkvsc_drv.c
+@@ -378,6 +378,7 @@ static int blkvsc_probe(struct device *device)
+ 		blkdev->gd->first_minor = 0;
+ 	blkdev->gd->fops = &block_ops;
+ 	blkdev->gd->private_data = blkdev;
++	blkdev->gd->driverfs_dev = &(blkdev->device_ctx->device);
+ 	sprintf(blkdev->gd->disk_name, "hd%c", 'a' + devnum);
+ 
+ 	blkvsc_do_inquiry(blkdev);
+-- 
+1.8.1.5
+

@@ -1,0 +1,33 @@
+From 207e1f6a999784bc8e7047f4ae9f72c73d48a9b2 Mon Sep 17 00:00:00 2001
+From: Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
+Date: Fri, 13 May 2011 17:03:02 +0200
+Subject: [PATCH 852/984] usb/gadget: at91sam9g20 fix end point max packet size
+
+commit bf1f0a05d472e33dda8e5e69525be1584cdbd03a upstream.
+
+on 9g20 they are the same as the 9260
+
+Signed-off-by: Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
+Acked-by: Nicolas Ferre <nicolas.ferre@atmel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/usb/gadget/at91_udc.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/usb/gadget/at91_udc.c b/drivers/usb/gadget/at91_udc.c
+index eaa79c8..ce3e479 100644
+--- a/drivers/usb/gadget/at91_udc.c
++++ b/drivers/usb/gadget/at91_udc.c
+@@ -1701,7 +1701,7 @@ static int __init at91udc_probe(struct platform_device *pdev)
+ 	}
+ 
+ 	/* newer chips have more FIFO memory than rm9200 */
+-	if (cpu_is_at91sam9260()) {
++	if (cpu_is_at91sam9260() || cpu_is_at91sam9g20()) {
+ 		udc->ep[0].maxpacket = 64;
+ 		udc->ep[3].maxpacket = 64;
+ 		udc->ep[4].maxpacket = 512;
+-- 
+1.8.1.5
+

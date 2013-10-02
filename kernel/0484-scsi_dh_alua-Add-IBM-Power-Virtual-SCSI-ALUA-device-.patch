@@ -1,0 +1,34 @@
+From e7063b88e6c51d05ad29dbdf9e610451ee6ba559 Mon Sep 17 00:00:00 2001
+From: Brian King <brking@linux.vnet.ibm.com>
+Date: Fri, 19 Feb 2010 10:08:31 -0600
+Subject: [PATCH 484/984] scsi_dh_alua: Add IBM Power Virtual SCSI ALUA device
+ to dev list
+
+commit 22963a37b3437a25812cc856afa5a84ad4a3f541 upstream.
+
+Adds IBM Power Virtual SCSI ALUA devices to the ALUA device handler.
+
+Signed-off-by: Brian King <brking@linux.vnet.ibm.com>
+Signed-off-by: James Bottomley <James.Bottomley@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+Cc: maximilian attems <max@stro.at>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+ drivers/scsi/device_handler/scsi_dh_alua.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/scsi/device_handler/scsi_dh_alua.c b/drivers/scsi/device_handler/scsi_dh_alua.c
+index a401ed2..3d9f55f 100644
+--- a/drivers/scsi/device_handler/scsi_dh_alua.c
++++ b/drivers/scsi/device_handler/scsi_dh_alua.c
+@@ -721,6 +721,7 @@ static const struct scsi_dh_devlist alua_dev_list[] = {
+ 	{"NETAPP", "LUN"},
+ 	{"AIX", "NVDISK"},
+ 	{"NETAPP", "LUN"},
++	{"AIX", "NVDISK"},
+ 	{NULL, NULL}
+ };
+ 
+-- 
+1.8.1.5
+

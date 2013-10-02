@@ -1,0 +1,53 @@
+From 7c8864bea48017a5166baa01f3bd81bf7ad623d7 Mon Sep 17 00:00:00 2001
+From: Pablo Neira Ayuso <pablo@netfilter.org>
+Date: Tue, 1 Feb 2011 16:03:46 +0100
+Subject: [PATCH 614/984] netfilter: arpt_mangle: fix return values of
+ checkentry
+
+In 135367b "netfilter: xtables: change xt_target.checkentry return type",
+the type returned by checkentry was changed from boolean to int, but the
+return values where not adjusted.
+
+arptables: Input/output error
+
+This broke arptables with the mangle target since it returns true
+under success, which is interpreted by xtables as >0, thus
+returning EIO.
+
+The following Linux kernels are affected:
+* 2.6.35.9
+* 2.6.36.4
+* 2.6.37.3
+
+Cc: stable@kernel.org
+Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
+Signed-off-by: Patrick McHardy <kaber@trash.net>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+(cherry picked from commit 9d0db8b6b1da9e3d4c696ef29449700c58d589db)
+---
+ net/ipv4/netfilter/arpt_mangle.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/net/ipv4/netfilter/arpt_mangle.c b/net/ipv4/netfilter/arpt_mangle.c
+index e1be7dd..1dcf5d2 100644
+--- a/net/ipv4/netfilter/arpt_mangle.c
++++ b/net/ipv4/netfilter/arpt_mangle.c
+@@ -60,12 +60,12 @@ static int checkentry(const struct xt_tgchk_param *par)
+ 
+ 	if (mangle->flags & ~ARPT_MANGLE_MASK ||
+ 	    !(mangle->flags & ARPT_MANGLE_MASK))
+-		return false;
++		return -EINVAL;
+ 
+ 	if (mangle->target != NF_DROP && mangle->target != NF_ACCEPT &&
+ 	   mangle->target != ARPT_CONTINUE)
+-		return false;
+-	return true;
++		return -EINVAL;
++	return 0;
+ }
+ 
+ static struct xt_target arpt_mangle_reg __read_mostly = {
+-- 
+1.8.1.5
+

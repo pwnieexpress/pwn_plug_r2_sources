@@ -1,0 +1,68 @@
+From e110ca176b8d6499d9b6d69a5e1b9055f10e6a1b Mon Sep 17 00:00:00 2001
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Date: Mon, 25 Oct 2010 03:21:24 +0200
+Subject: [PATCH 100/984] KVM: Write protect memory after slot swap
+
+commit edde99ce05290e50ce0b3495d209e54e6349ab47 upstream.
+
+I have observed the following bug trigger:
+
+1. userspace calls GET_DIRTY_LOG
+2. kvm_mmu_slot_remove_write_access is called and makes a page ro
+3. page fault happens and makes the page writeable
+   fault is logged in the bitmap appropriately
+4. kvm_vm_ioctl_get_dirty_log swaps slot pointers
+
+a lot of time passes
+
+5. guest writes into the page
+6. userspace calls GET_DIRTY_LOG
+
+At point (5), bitmap is clean and page is writeable,
+thus, guest modification of memory is not logged
+and GET_DIRTY_LOG returns an empty bitmap.
+
+The rule is that all pages are either dirty in the current bitmap,
+or write-protected, which is violated here.
+
+It seems that just moving kvm_mmu_slot_remove_write_access down
+to after the slot pointer swap should fix this bug.
+
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Avi Kivity <avi@redhat.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ arch/x86/kvm/x86.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
+index be92511..ff274a1 100644
+--- a/arch/x86/kvm/x86.c
++++ b/arch/x86/kvm/x86.c
+@@ -2825,10 +2825,6 @@ int kvm_vm_ioctl_get_dirty_log(struct kvm *kvm,
+ 	if (is_dirty) {
+ 		struct kvm_memslots *slots, *old_slots;
+ 
+-		spin_lock(&kvm->mmu_lock);
+-		kvm_mmu_slot_remove_write_access(kvm, log->slot);
+-		spin_unlock(&kvm->mmu_lock);
+-
+ 		slots = kzalloc(sizeof(struct kvm_memslots), GFP_KERNEL);
+ 		if (!slots)
+ 			goto out_free;
+@@ -2841,6 +2837,11 @@ int kvm_vm_ioctl_get_dirty_log(struct kvm *kvm,
+ 		synchronize_srcu_expedited(&kvm->srcu);
+ 		dirty_bitmap = old_slots->memslots[log->slot].dirty_bitmap;
+ 		kfree(old_slots);
++
++		spin_lock(&kvm->mmu_lock);
++		kvm_mmu_slot_remove_write_access(kvm, log->slot);
++		spin_unlock(&kvm->mmu_lock);
++
+ 	}
+ 
+ 	r = 0;
+-- 
+1.8.1.5
+

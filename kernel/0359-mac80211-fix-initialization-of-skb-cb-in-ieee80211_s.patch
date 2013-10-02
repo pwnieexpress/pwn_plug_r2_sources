@@ -1,0 +1,44 @@
+From d3fef978044748b2ebf601abe96f52863b107e47 Mon Sep 17 00:00:00 2001
+From: Felix Fietkau <nbd@openwrt.org>
+Date: Sat, 18 Dec 2010 19:30:48 +0100
+Subject: [PATCH 359/984] mac80211: fix initialization of skb->cb in
+ ieee80211_subif_start_xmit
+
+[ upstream commit 489ee9195a7de9e6bc833d639ff6b553ffdad90e ]
+
+The change 'mac80211: Fix BUG in pskb_expand_head when transmitting shared skbs'
+added a check for copying the skb if it's shared, however the tx info variable
+still points at the cb of the old skb
+
+Signed-off-by: Felix Fietkau <nbd@openwrt.org>
+Acked-by: Helmut Schaa <helmut.schaa@googlemail.com>
+Signed-off-by: John W. Linville <linville@tuxdriver.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/mac80211/tx.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/net/mac80211/tx.c b/net/mac80211/tx.c
+index 10910d6..1ec650b 100644
+--- a/net/mac80211/tx.c
++++ b/net/mac80211/tx.c
+@@ -1668,7 +1668,7 @@ netdev_tx_t ieee80211_subif_start_xmit(struct sk_buff *skb,
+ {
+ 	struct ieee80211_sub_if_data *sdata = IEEE80211_DEV_TO_SUB_IF(dev);
+ 	struct ieee80211_local *local = sdata->local;
+-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
++	struct ieee80211_tx_info *info;
+ 	int ret = NETDEV_TX_BUSY, head_need;
+ 	u16 ethertype, hdrlen,  meshhdrlen = 0;
+ 	__le16 fc;
+@@ -1956,6 +1956,7 @@ netdev_tx_t ieee80211_subif_start_xmit(struct sk_buff *skb,
+ 	skb_set_network_header(skb, nh_pos);
+ 	skb_set_transport_header(skb, h_pos);
+ 
++	info = IEEE80211_SKB_CB(skb);
+ 	memset(info, 0, sizeof(*info));
+ 
+ 	dev->trans_start = jiffies;
+-- 
+1.8.1.5
+

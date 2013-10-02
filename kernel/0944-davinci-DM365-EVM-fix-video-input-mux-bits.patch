@@ -1,0 +1,46 @@
+From 5671ba64a10a8150de56a8131cf0084381ca79ba Mon Sep 17 00:00:00 2001
+From: Jon Povey <jon.povey@racelogic.co.uk>
+Date: Tue, 19 Jul 2011 12:30:11 +0900
+Subject: [PATCH 944/984] davinci: DM365 EVM: fix video input mux bits
+
+[ upstream commit 9daedd833a38edd90cf7baa1b1fcf61c3a0721e3 ]
+
+Video input mux settings for tvp7002 and imager inputs were swapped.
+Comment was correct.
+
+Tested on EVM with tvp7002 input.
+
+Signed-off-by: Jon Povey <jon.povey@racelogic.co.uk>
+Acked-by: Manjunath Hadli <manjunath.hadli@ti.com>
+Cc: stable@kernel.org
+Signed-off-by: Sekhar Nori <nsekhar@ti.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ arch/arm/mach-davinci/board-dm365-evm.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/mach-davinci/board-dm365-evm.c b/arch/arm/mach-davinci/board-dm365-evm.c
+index 84acef1..c3a4f29 100644
+--- a/arch/arm/mach-davinci/board-dm365-evm.c
++++ b/arch/arm/mach-davinci/board-dm365-evm.c
+@@ -520,7 +520,7 @@ fail:
+ 	 */
+ 	if (have_imager()) {
+ 		label = "HD imager";
+-		mux |= 1;
++		mux |= 2;
+ 
+ 		/* externally mux MMC1/ENET/AIC33 to imager */
+ 		mux |= BIT(6) | BIT(5) | BIT(3);
+@@ -541,7 +541,7 @@ fail:
+ 		resets &= ~BIT(1);
+ 
+ 		if (have_tvp7002()) {
+-			mux |= 2;
++			mux |= 1;
+ 			resets &= ~BIT(2);
+ 			label = "tvp7002 HD";
+ 		} else {
+-- 
+1.8.1.5
+

@@ -1,0 +1,54 @@
+From 46b77d237a5c4c393f5461729291030fc3e6e120 Mon Sep 17 00:00:00 2001
+From: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date: Thu, 7 Oct 2010 16:01:25 -0700
+Subject: [PATCH 048/984] drm/i915: diasable clock gating for the panel power
+ sequencer
+
+commit 382b09362711d7d03272230a33767015a277926e upstream.
+
+Needed on Ibex Peak and Cougar Point or the panel won't always come on.
+
+Signed-off-by: Jesse Barnes <jbarnes@virtuousgeek.org>
+Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/gpu/drm/i915/i915_reg.h      | 3 +++
+ drivers/gpu/drm/i915/intel_display.c | 7 +++++++
+ 2 files changed, 10 insertions(+)
+
+diff --git a/drivers/gpu/drm/i915/i915_reg.h b/drivers/gpu/drm/i915/i915_reg.h
+index bed6a5e..140f017 100644
+--- a/drivers/gpu/drm/i915/i915_reg.h
++++ b/drivers/gpu/drm/i915/i915_reg.h
+@@ -2709,6 +2709,9 @@
+ #define FDI_RXB_CHICKEN         0xc2010
+ #define  FDI_RX_PHASE_SYNC_POINTER_ENABLE       (1)
+ 
++#define SOUTH_DSPCLK_GATE_D	0xc2020
++#define  PCH_DPLSUNIT_CLOCK_GATE_DISABLE (1<<29)
++
+ /* CPU: FDI_TX */
+ #define FDI_TXA_CTL             0x60100
+ #define FDI_TXB_CTL             0x61100
+diff --git a/drivers/gpu/drm/i915/intel_display.c b/drivers/gpu/drm/i915/intel_display.c
+index d1c1243..660c67c 100644
+--- a/drivers/gpu/drm/i915/intel_display.c
++++ b/drivers/gpu/drm/i915/intel_display.c
+@@ -5416,6 +5416,13 @@ void intel_init_clock_gating(struct drm_device *dev)
+ 		I915_WRITE(PCH_DSPCLK_GATE_D, dspclk_gate);
+ 
+ 		/*
++		 * On Ibex Peak and Cougar Point, we need to disable clock
++		 * gating for the panel power sequencer or it will fail to
++		 * start up when no ports are active.
++		 */
++		I915_WRITE(SOUTH_DSPCLK_GATE_D, PCH_DPLSUNIT_CLOCK_GATE_DISABLE);
++
++		/*
+ 		 * According to the spec the following bits should be set in
+ 		 * order to enable memory self-refresh
+ 		 * The bit 22/21 of 0x42004
+-- 
+1.8.1.5
+

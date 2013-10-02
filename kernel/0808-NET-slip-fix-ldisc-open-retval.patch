@@ -1,0 +1,37 @@
+From 8eca68a77b9403beca2abebee81737c3fe423407 Mon Sep 17 00:00:00 2001
+From: Matvejchikov Ilya <matvejchikov@gmail.com>
+Date: Fri, 6 May 2011 06:23:09 +0000
+Subject: [PATCH 808/984] NET: slip, fix ldisc->open retval
+
+commit 057bef938896e6266ae24ec4266d24792d27c29a upstream.
+
+TTY layer expects 0 if the ldisc->open operation succeeded.
+
+Signed-off-by : Matvejchikov Ilya <matvejchikov@gmail.com>
+Acked-by: Oliver Hartkopp <socketcan@hartkopp.net>
+Acked-by: Alan Cox <alan@linux.intel.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/net/slip.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/slip.c b/drivers/net/slip.c
+index fa434fb..fff62f4 100644
+--- a/drivers/net/slip.c
++++ b/drivers/net/slip.c
+@@ -852,7 +852,9 @@ static int slip_open(struct tty_struct *tty)
+ 	/* Done.  We have linked the TTY line to a channel. */
+ 	rtnl_unlock();
+ 	tty->receive_room = 65536;	/* We don't flow control */
+-	return sl->dev->base_addr;
++
++	/* TTY layer expects 0 on success */
++	return 0;
+ 
+ err_free_bufs:
+ 	sl_free_bufs(sl);
+-- 
+1.8.1.5
+

@@ -1,0 +1,35 @@
+From 4214a0da0bdd0a7d11a7b560dfed69617d2a6dab Mon Sep 17 00:00:00 2001
+From: Trond Myklebust <Trond.Myklebust@netapp.com>
+Date: Tue, 22 Mar 2011 18:40:10 -0400
+Subject: [PATCH 597/984] SUNRPC: Never reuse the socket port after an
+ xs_close()
+
+commit 246408dcd5dfeef2df437ccb0ef4d6ee87805f58 upstream.
+
+If we call xs_close(), we're in one of two situations:
+ - Autoclose, which means we don't expect to resend a request
+ - bind+connect failed, which probably means the port is in use
+
+Signed-off-by: Trond Myklebust <Trond.Myklebust@netapp.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/sunrpc/xprtsock.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/net/sunrpc/xprtsock.c b/net/sunrpc/xprtsock.c
+index 7ca65c7..02fbb8d 100644
+--- a/net/sunrpc/xprtsock.c
++++ b/net/sunrpc/xprtsock.c
+@@ -710,6 +710,8 @@ static void xs_reset_transport(struct sock_xprt *transport)
+ 	if (sk == NULL)
+ 		return;
+ 
++	transport->srcport = 0;
++
+ 	write_lock_bh(&sk->sk_callback_lock);
+ 	transport->inet = NULL;
+ 	transport->sock = NULL;
+-- 
+1.8.1.5
+

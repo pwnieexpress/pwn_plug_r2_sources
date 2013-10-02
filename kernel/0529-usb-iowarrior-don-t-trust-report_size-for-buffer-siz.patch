@@ -1,0 +1,37 @@
+From 7e150642300a8c69f3e219f960f0d454ca442df8 Mon Sep 17 00:00:00 2001
+From: Kees Cook <kees.cook@canonical.com>
+Date: Mon, 11 Oct 2010 11:28:16 -0700
+Subject: [PATCH 529/984] usb: iowarrior: don't trust report_size for buffer
+ size
+
+commit 3ed780117dbe5acb64280d218f0347f238dafed0 upstream.
+
+If the iowarrior devices in this case statement support more than 8 bytes
+per report, it is possible to write past the end of a kernel heap allocation.
+This will probably never be possible, but change the allocation to be more
+defensive anyway.
+
+Signed-off-by: Kees Cook <kees.cook@canonical.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Acked-by: Brandon Philips <bphilips@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/usb/misc/iowarrior.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/usb/misc/iowarrior.c b/drivers/usb/misc/iowarrior.c
+index b47e694..654243e 100644
+--- a/drivers/usb/misc/iowarrior.c
++++ b/drivers/usb/misc/iowarrior.c
+@@ -373,7 +373,7 @@ static ssize_t iowarrior_write(struct file *file,
+ 	case USB_DEVICE_ID_CODEMERCS_IOWPV2:
+ 	case USB_DEVICE_ID_CODEMERCS_IOW40:
+ 		/* IOW24 and IOW40 use a synchronous call */
+-		buf = kmalloc(8, GFP_KERNEL);	/* 8 bytes are enough for both products */
++		buf = kmalloc(count, GFP_KERNEL);
+ 		if (!buf) {
+ 			retval = -ENOMEM;
+ 			goto exit;
+-- 
+1.8.1.5
+

@@ -1,0 +1,64 @@
+From babbccf4d973c20eb79b5879a669106bd67b2f33 Mon Sep 17 00:00:00 2001
+From: Trond Myklebust <Trond.Myklebust@netapp.com>
+Date: Mon, 4 Oct 2010 17:59:08 -0400
+Subject: [PATCH 042/984] NFS: Don't SIGBUS if nfs_vm_page_mkwrite races with a
+ cache invalidation
+
+commit bc4866b6e0b44f8ea0df22a16e5927714beb4983 upstream.
+
+In the case where we lock the page, and then find out that the page has
+been thrown out of the page cache, we should just return VM_FAULT_NOPAGE.
+This is what block_page_mkwrite() does in these situations.
+
+Signed-off-by: Trond Myklebust <Trond.Myklebust@netapp.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ fs/nfs/file.c | 17 ++++++++---------
+ 1 file changed, 8 insertions(+), 9 deletions(-)
+
+diff --git a/fs/nfs/file.c b/fs/nfs/file.c
+index f036153..e8929ee 100644
+--- a/fs/nfs/file.c
++++ b/fs/nfs/file.c
+@@ -560,7 +560,7 @@ static int nfs_vm_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
+ 	struct file *filp = vma->vm_file;
+ 	struct dentry *dentry = filp->f_path.dentry;
+ 	unsigned pagelen;
+-	int ret = -EINVAL;
++	int ret = VM_FAULT_NOPAGE;
+ 	struct address_space *mapping;
+ 
+ 	dfprintk(PAGECACHE, "NFS: vm_page_mkwrite(%s/%s(%ld), offset %lld)\n",
+@@ -576,21 +576,20 @@ static int nfs_vm_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
+ 	if (mapping != dentry->d_inode->i_mapping)
+ 		goto out_unlock;
+ 
+-	ret = 0;
+ 	pagelen = nfs_page_length(page);
+ 	if (pagelen == 0)
+ 		goto out_unlock;
+ 
+-	ret = nfs_flush_incompatible(filp, page);
+-	if (ret != 0)
+-		goto out_unlock;
++	ret = VM_FAULT_LOCKED;
++	if (nfs_flush_incompatible(filp, page) == 0 &&
++	    nfs_updatepage(filp, page, 0, pagelen) == 0)
++		goto out;
+ 
+-	ret = nfs_updatepage(filp, page, 0, pagelen);
++	ret = VM_FAULT_SIGBUS;
+ out_unlock:
+-	if (!ret)
+-		return VM_FAULT_LOCKED;
+ 	unlock_page(page);
+-	return VM_FAULT_SIGBUS;
++out:
++	return ret;
+ }
+ 
+ static const struct vm_operations_struct nfs_file_vm_ops = {
+-- 
+1.8.1.5
+

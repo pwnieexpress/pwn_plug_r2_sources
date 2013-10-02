@@ -1,0 +1,35 @@
+From 3db400fabd1f22b4bb4187142d0eb33efceff85a Mon Sep 17 00:00:00 2001
+From: Hans Verkuil <hans.verkuil@cisco.com>
+Date: Sun, 12 Jun 2011 07:02:43 -0300
+Subject: [PATCH 965/984] bttv: fix s_tuner for radio
+
+[ upstream commit a024c1a6b274e11596d124619e43c25560f64c01 ]
+
+Fix typo: g_tuner should have been s_tuner.
+
+Tested with a bttv card.
+
+Cc: stable@kernel.org
+Signed-off-by: Hans Verkuil <hans.verkuil@cisco.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab@redhat.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/media/video/bt8xx/bttv-driver.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/media/video/bt8xx/bttv-driver.c b/drivers/media/video/bt8xx/bttv-driver.c
+index 38c7f78..9f8e8ad 100644
+--- a/drivers/media/video/bt8xx/bttv-driver.c
++++ b/drivers/media/video/bt8xx/bttv-driver.c
+@@ -3525,7 +3525,7 @@ static int radio_s_tuner(struct file *file, void *priv,
+ 	if (0 != t->index)
+ 		return -EINVAL;
+ 
+-	bttv_call_all(btv, tuner, g_tuner, t);
++	bttv_call_all(btv, tuner, s_tuner, t);
+ 	return 0;
+ }
+ 
+-- 
+1.8.1.5
+

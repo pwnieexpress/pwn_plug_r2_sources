@@ -1,0 +1,44 @@
+From c556eedc001797517011d7e68a3be5dd437a2054 Mon Sep 17 00:00:00 2001
+From: Henrique de Moraes Holschuh <hmh@hmh.eng.br>
+Date: Fri, 17 Sep 2010 21:53:41 -0300
+Subject: [PATCH 365/984] thinkpad-acpi: avoid keymap pitfall
+
+[ upstream commit fc6e756894b703952fd277a1f98a5d93e7ba847a ]
+
+Change the code so that it will use the correct size for keymap entries.
+Do it in a way that makes it harder to screw it up in the future.
+
+Reported-by: Jaime Velasco Juan <jsagarribay@gmail.com>
+Signed-off-by: Henrique de Moraes Holschuh <hmh@hmh.eng.br>
+Signed-off-by: Matthew Garrett <mjg@redhat.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/platform/x86/thinkpad_acpi.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/platform/x86/thinkpad_acpi.c b/drivers/platform/x86/thinkpad_acpi.c
+index a48c80a..babc4d4 100644
+--- a/drivers/platform/x86/thinkpad_acpi.c
++++ b/drivers/platform/x86/thinkpad_acpi.c
+@@ -3093,7 +3093,8 @@ static const struct tpacpi_quirk tpacpi_hotkey_qtable[] __initconst = {
+ 	TPACPI_Q_IBM('1', 'D', TPACPI_HK_Q_INIMASK), /* X22, X23, X24 */
+ };
+ 
+-typedef u16 tpacpi_keymap_t[TPACPI_HOTKEY_MAP_LEN];
++typedef u16 tpacpi_keymap_entry_t;
++typedef tpacpi_keymap_entry_t tpacpi_keymap_t[TPACPI_HOTKEY_MAP_LEN];
+ 
+ static int __init hotkey_init(struct ibm_init_struct *iibm)
+ {
+@@ -3230,7 +3231,7 @@ static int __init hotkey_init(struct ibm_init_struct *iibm)
+ 	};
+ 
+ #define TPACPI_HOTKEY_MAP_SIZE		sizeof(tpacpi_keymap_t)
+-#define TPACPI_HOTKEY_MAP_TYPESIZE	sizeof(tpacpi_keymap_t[0])
++#define TPACPI_HOTKEY_MAP_TYPESIZE	sizeof(tpacpi_keymap_entry_t)
+ 
+ 	int res, i;
+ 	int status;
+-- 
+1.8.1.5
+

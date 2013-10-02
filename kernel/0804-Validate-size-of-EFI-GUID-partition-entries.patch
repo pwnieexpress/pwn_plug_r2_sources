@@ -1,0 +1,37 @@
+From 9f5a8a5d1018c56e5d74db644d739e1be72e6f88 Mon Sep 17 00:00:00 2001
+From: Timo Warns <Warns@pre-sense.de>
+Date: Fri, 6 May 2011 13:47:35 +0200
+Subject: [PATCH 804/984] Validate size of EFI GUID partition entries.
+
+commit fa039d5f6b126fbd65eefa05db2f67e44df8f121 upstream.
+
+Otherwise corrupted EFI partition tables can cause total confusion.
+
+Signed-off-by: Timo Warns <warns@pre-sense.de>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ fs/partitions/efi.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/fs/partitions/efi.c b/fs/partitions/efi.c
+index 9efb2cf..3e0ee12 100644
+--- a/fs/partitions/efi.c
++++ b/fs/partitions/efi.c
+@@ -347,6 +347,12 @@ static int is_gpt_valid(struct parsed_partitions *state, u64 lba,
+ 		goto fail;
+ 	}
+ 
++	/* Check that sizeof_partition_entry has the correct value */
++	if (le32_to_cpu((*gpt)->sizeof_partition_entry) != sizeof(gpt_entry)) {
++		pr_debug("GUID Partitition Entry Size check failed.\n");
++		goto fail;
++	}
++
+ 	if (!(*ptes = alloc_read_gpt_entries(state, *gpt)))
+ 		goto fail;
+ 
+-- 
+1.8.1.5
+

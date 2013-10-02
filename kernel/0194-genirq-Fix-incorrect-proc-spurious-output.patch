@@ -1,0 +1,44 @@
+From 32005932e9aa0c2b97fd817edde2dff1c5640734 Mon Sep 17 00:00:00 2001
+From: Kenji Kaneshige <kaneshige.kenji@jp.fujitsu.com>
+Date: Tue, 30 Nov 2010 17:36:08 +0900
+Subject: [PATCH 194/984] genirq: Fix incorrect proc spurious output
+
+commit 25c9170ed64a6551beefe9315882f754e14486f4 upstream.
+
+Since commit a1afb637(switch /proc/irq/*/spurious to seq_file) all
+/proc/irq/XX/spurious files show the information of irq 0.
+
+Current irq_spurious_proc_open() passes on NULL as the 3rd argument,
+which is used as an IRQ number in irq_spurious_proc_show(), to the
+single_open(). Because of this, all the /proc/irq/XX/spurious file
+shows IRQ 0 information regardless of the IRQ number.
+
+To fix the problem, irq_spurious_proc_open() must pass on the
+appropreate data (IRQ number) to single_open().
+
+Signed-off-by: Kenji Kaneshige <kaneshige.kenji@jp.fujitsu.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+Reviewed-by: Yong Zhang <yong.zhang0@gmail.com>
+LKML-Reference: <4CF4B778.90604@jp.fujitsu.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+ kernel/irq/proc.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/kernel/irq/proc.c b/kernel/irq/proc.c
+index 09a2ee5..345e0b7 100644
+--- a/kernel/irq/proc.c
++++ b/kernel/irq/proc.c
+@@ -214,7 +214,7 @@ static int irq_spurious_proc_show(struct seq_file *m, void *v)
+ 
+ static int irq_spurious_proc_open(struct inode *inode, struct file *file)
+ {
+-	return single_open(file, irq_spurious_proc_show, NULL);
++	return single_open(file, irq_spurious_proc_show, PDE(inode)->data);
+ }
+ 
+ static const struct file_operations irq_spurious_proc_fops = {
+-- 
+1.8.1.5
+

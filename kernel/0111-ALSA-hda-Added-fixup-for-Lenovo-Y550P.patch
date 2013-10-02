@@ -1,0 +1,30 @@
+From 43365dd81ad90375befc33ea426d3448a04f0c38 Mon Sep 17 00:00:00 2001
+From: Valentine Sinitsyn <valentine.sinitsyn@gmail.com>
+Date: Fri, 1 Oct 2010 22:24:08 +0600
+Subject: [PATCH 111/984] ALSA: hda - Added fixup for Lenovo Y550P
+
+commit d41185882b828896ccecac319c9f65f708baaf0d upstream.
+
+Signed-off-by: Valentine Sinitsyn <valentine.sinitsyn@gmail.com>
+Signed-off-by: Takashi Iwai <tiwai@suse.de>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ sound/pci/hda/patch_realtek.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/sound/pci/hda/patch_realtek.c b/sound/pci/hda/patch_realtek.c
+index 26820cd..2a085aa 100644
+--- a/sound/pci/hda/patch_realtek.c
++++ b/sound/pci/hda/patch_realtek.c
+@@ -18693,6 +18693,7 @@ static const struct alc_fixup alc662_fixups[] = {
+ };
+ 
+ static struct snd_pci_quirk alc662_fixup_tbl[] = {
++	SND_PCI_QUIRK(0x17aa, 0x38af, "Lenovo Ideapad Y550P", ALC662_FIXUP_IDEAPAD),
+ 	SND_PCI_QUIRK(0x17aa, 0x3a0d, "Lenovo Ideapad Y550", ALC662_FIXUP_IDEAPAD),
+ 	{}
+ };
+-- 
+1.8.1.5
+

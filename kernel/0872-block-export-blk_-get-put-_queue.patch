@@ -1,0 +1,40 @@
+From f253441b14e828b6cb0c8d030d3985738730e5fd Mon Sep 17 00:00:00 2001
+From: Jens Axboe <jaxboe@fusionio.com>
+Date: Fri, 27 May 2011 07:44:43 +0200
+Subject: [PATCH 872/984] block: export blk_{get,put}_queue()
+
+commit d86e0e83b32bc84600adb0b6ea1fce389b266682 upstream.
+
+We need them in SCSI to fix a bug, but currently they are not
+exported to modules. Export them.
+
+Signed-off-by: Jens Axboe <jaxboe@fusionio.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ block/blk-core.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/block/blk-core.c b/block/blk-core.c
+index f0640d7..3b3affd 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -311,6 +311,7 @@ void blk_unplug_timeout(unsigned long data)
+ 	trace_block_unplug_timer(q);
+ 	kblockd_schedule_work(q, &q->unplug_work);
+ }
++EXPORT_SYMBOL(blk_put_queue);
+ 
+ void blk_unplug(struct request_queue *q)
+ {
+@@ -640,6 +641,7 @@ int blk_get_queue(struct request_queue *q)
+ 
+ 	return 1;
+ }
++EXPORT_SYMBOL(blk_get_queue);
+ 
+ static inline void blk_free_request(struct request_queue *q, struct request *rq)
+ {
+-- 
+1.8.1.5
+

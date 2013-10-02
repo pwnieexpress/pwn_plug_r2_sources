@@ -1,0 +1,32 @@
+From eb918d171083f46813b93c9dd458f98c14189fdf Mon Sep 17 00:00:00 2001
+From: Takashi Iwai <tiwai@suse.de>
+Date: Mon, 11 Oct 2010 14:46:35 +0200
+Subject: [PATCH 782/984] ALSA: hda - Add model=mbp55 entry for MacBookPro 7,1
+
+commit f46119b73425df9d1e05c5d5e909a993d95b0218 upstream.
+
+Reference: Novell bnc#645066
+	https://bugzilla.novell.com/show_bug.cgi?id=645066
+
+Signed-off-by: Takashi Iwai <tiwai@suse.de>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ sound/pci/hda/patch_cirrus.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/sound/pci/hda/patch_cirrus.c b/sound/pci/hda/patch_cirrus.c
+index 370933c..d6d2595 100644
+--- a/sound/pci/hda/patch_cirrus.c
++++ b/sound/pci/hda/patch_cirrus.c
+@@ -1142,6 +1142,7 @@ static const char *cs420x_models[CS420X_MODELS] = {
+ static struct snd_pci_quirk cs420x_cfg_tbl[] = {
+ 	SND_PCI_QUIRK(0x10de, 0x0ac0, "MacBookPro 5,3", CS420X_MBP53),
+ 	SND_PCI_QUIRK(0x10de, 0xcb79, "MacBookPro 5,5", CS420X_MBP55),
++	SND_PCI_QUIRK(0x10de, 0xcb89, "MacBookPro 7,1", CS420X_MBP55),
+ 	SND_PCI_QUIRK(0x8086, 0x7270, "IMac 27 Inch", CS420X_IMAC27),
+ 	{} /* terminator */
+ };
+-- 
+1.8.1.5
+

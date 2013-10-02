@@ -1,0 +1,78 @@
+From 56cb45ba8f738f979621b4f91b21908b4226bbe6 Mon Sep 17 00:00:00 2001
+From: Nikhil Rao <ncrao@google.com>
+Date: Thu, 10 Feb 2011 10:23:25 +0100
+Subject: [PATCH 454/984] sched: Set group_imb only a task can be pulled from
+ the busiest cpu
+
+Commit: 2582f0eba54066b5e98ff2b27ef0cfa833b59f54 upstream
+
+When cycling through sched groups to determine the busiest group, set
+group_imb only if the busiest cpu has more than 1 runnable task. This patch
+fixes the case where two cpus in a group have one runnable task each, but there
+is a large weight differential between these two tasks. The load balancer is
+unable to migrate any task from this group, and hence do not consider this
+group to be imbalanced.
+
+Signed-off-by: Nikhil Rao <ncrao@google.com>
+Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+LKML-Reference: <1286996978-7007-3-git-send-email-ncrao@google.com>
+[ small code readability edits ]
+Signed-off-by: Ingo Molnar <mingo@elte.hu>
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+Acked-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+ kernel/sched_fair.c | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/kernel/sched_fair.c b/kernel/sched_fair.c
+index dc57eb8..db9fbc3 100644
+--- a/kernel/sched_fair.c
++++ b/kernel/sched_fair.c
+@@ -2352,7 +2352,7 @@ static inline void update_sg_lb_stats(struct sched_domain *sd,
+ 			int local_group, const struct cpumask *cpus,
+ 			int *balance, struct sg_lb_stats *sgs)
+ {
+-	unsigned long load, max_cpu_load, min_cpu_load;
++	unsigned long load, max_cpu_load, min_cpu_load, max_nr_running;
+ 	int i;
+ 	unsigned int balance_cpu = -1, first_idle_cpu = 0;
+ 	unsigned long avg_load_per_task = 0;
+@@ -2363,6 +2363,7 @@ static inline void update_sg_lb_stats(struct sched_domain *sd,
+ 	/* Tally up the load of all CPUs in the group */
+ 	max_cpu_load = 0;
+ 	min_cpu_load = ~0UL;
++	max_nr_running = 0;
+ 
+ 	for_each_cpu_and(i, sched_group_cpus(group), cpus) {
+ 		struct rq *rq = cpu_rq(i);
+@@ -2380,8 +2381,10 @@ static inline void update_sg_lb_stats(struct sched_domain *sd,
+ 			load = target_load(i, load_idx);
+ 		} else {
+ 			load = source_load(i, load_idx);
+-			if (load > max_cpu_load)
++			if (load > max_cpu_load) {
+ 				max_cpu_load = load;
++				max_nr_running = rq->nr_running;
++			}
+ 			if (min_cpu_load > load)
+ 				min_cpu_load = load;
+ 		}
+@@ -2421,11 +2424,10 @@ static inline void update_sg_lb_stats(struct sched_domain *sd,
+ 	if (sgs->sum_nr_running)
+ 		avg_load_per_task = sgs->sum_weighted_load / sgs->sum_nr_running;
+ 
+-	if ((max_cpu_load - min_cpu_load) > 2*avg_load_per_task)
++	if ((max_cpu_load - min_cpu_load) > 2*avg_load_per_task && max_nr_running > 1)
+ 		sgs->group_imb = 1;
+ 
+-	sgs->group_capacity =
+-		DIV_ROUND_CLOSEST(group->cpu_power, SCHED_LOAD_SCALE);
++	sgs->group_capacity = DIV_ROUND_CLOSEST(group->cpu_power, SCHED_LOAD_SCALE);
+ }
+ 
+ /**
+-- 
+1.8.1.5
+

@@ -1,0 +1,39 @@
+From ef8b14b4fd36fbf79a7823b5741fa901755ee62d Mon Sep 17 00:00:00 2001
+From: Dan Rosenberg <drosenberg@vsecurity.com>
+Date: Mon, 25 Jul 2011 17:11:53 -0700
+Subject: [PATCH 935/984] xtensa: prevent arbitrary read in ptrace
+
+[ upstream commit 0d0138ebe24b94065580bd2601f8bb7eb6152f56 ]
+
+Prevent an arbitrary kernel read.  Check the user pointer with access_ok()
+before copying data in.
+
+[akpm@linux-foundation.org: s/EIO/EFAULT/]
+Signed-off-by: Dan Rosenberg <drosenberg@vsecurity.com>
+Cc: Christian Zankel <chris@zankel.net>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: <stable@kernel.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ arch/xtensa/kernel/ptrace.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/arch/xtensa/kernel/ptrace.c b/arch/xtensa/kernel/ptrace.c
+index 9d4e1ce..f0ccfc7 100644
+--- a/arch/xtensa/kernel/ptrace.c
++++ b/arch/xtensa/kernel/ptrace.c
+@@ -147,6 +147,9 @@ int ptrace_setxregs(struct task_struct *child, void __user *uregs)
+ 	elf_xtregs_t *xtregs = uregs;
+ 	int ret = 0;
+ 
++	if (!access_ok(VERIFY_READ, uregs, sizeof(elf_xtregs_t)))
++		return -EFAULT;
++
+ #if XTENSA_HAVE_COPROCESSORS
+ 	/* Flush all coprocessors before we overwrite them. */
+ 	coprocessor_flush_all(ti);
+-- 
+1.8.1.5
+

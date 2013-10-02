@@ -1,0 +1,117 @@
+From db9fb5db749de2109d9312929c6e2f70b2055f89 Mon Sep 17 00:00:00 2001
+From: Olaf Hering <olaf@aepfle.de>
+Date: Mon, 21 Mar 2011 14:41:37 +0100
+Subject: [PATCH 640/984] staging: hv: use sync_bitops when interacting with
+ the hypervisor
+
+commit 22356585712d1ff08fbfed152edd8b386873b238 upstream.
+
+Locking is required when tweaking bits located in a shared page, use the
+sync_ version of bitops. Without this change vmbus_on_event() will miss
+events and as a result, vmbus_isr() will not schedule the receive tasklet.
+
+[Backported to 2.6.32 stable kernel by Haiyang Zhang <haiyangz@microsoft.com>]
+
+Signed-off-by: Olaf Hering <olaf@aepfle.de>
+Acked-by: Haiyang Zhang <haiyangz@microsoft.com>
+Acked-by: Hank Janssen <hjanssen@microsoft.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/staging/hv/channel.c       | 8 ++++----
+ drivers/staging/hv/connection.c    | 6 ++++--
+ drivers/staging/hv/vmbus.c         | 2 +-
+ drivers/staging/hv/vmbus_private.h | 1 +
+ 4 files changed, 10 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/staging/hv/channel.c b/drivers/staging/hv/channel.c
+index f047c5a..8955d6a 100644
+--- a/drivers/staging/hv/channel.c
++++ b/drivers/staging/hv/channel.c
+@@ -78,14 +78,14 @@ static void VmbusChannelSetEvent(struct vmbus_channel *Channel)
+ 
+ 	if (Channel->OfferMsg.MonitorAllocated) {
+ 		/* Each u32 represents 32 channels */
+-		set_bit(Channel->OfferMsg.ChildRelId & 31,
++		sync_set_bit(Channel->OfferMsg.ChildRelId & 31,
+ 			(unsigned long *) gVmbusConnection.SendInterruptPage +
+ 			(Channel->OfferMsg.ChildRelId >> 5));
+ 
+ 		monitorPage = gVmbusConnection.MonitorPages;
+ 		monitorPage++; /* Get the child to parent monitor page */
+ 
+-		set_bit(Channel->MonitorBit,
++		sync_set_bit(Channel->MonitorBit,
+ 			(unsigned long *)&monitorPage->TriggerGroup
+ 					[Channel->MonitorGroup].Pending);
+ 
+@@ -105,7 +105,7 @@ static void VmbusChannelClearEvent(struct vmbus_channel *channel)
+ 
+ 	if (Channel->OfferMsg.MonitorAllocated) {
+ 		/* Each u32 represents 32 channels */
+-		clear_bit(Channel->OfferMsg.ChildRelId & 31,
++		sync_clear_bit(Channel->OfferMsg.ChildRelId & 31,
+ 			  (unsigned long *)gVmbusConnection.SendInterruptPage +
+ 			  (Channel->OfferMsg.ChildRelId >> 5));
+ 
+@@ -113,7 +113,7 @@ static void VmbusChannelClearEvent(struct vmbus_channel *channel)
+ 			(struct hv_monitor_page *)gVmbusConnection.MonitorPages;
+ 		monitorPage++; /* Get the child to parent monitor page */
+ 
+-		clear_bit(Channel->MonitorBit,
++		sync_clear_bit(Channel->MonitorBit,
+ 			  (unsigned long *)&monitorPage->TriggerGroup
+ 					[Channel->MonitorGroup].Pending);
+ 	}
+diff --git a/drivers/staging/hv/connection.c b/drivers/staging/hv/connection.c
+index e8824da..d80a9f3 100644
+--- a/drivers/staging/hv/connection.c
++++ b/drivers/staging/hv/connection.c
+@@ -292,7 +292,9 @@ void VmbusOnEvents(void)
+ 		for (dword = 0; dword < maxdword; dword++) {
+ 			if (recvInterruptPage[dword]) {
+ 				for (bit = 0; bit < 32; bit++) {
+-					if (test_and_clear_bit(bit, (unsigned long *)&recvInterruptPage[dword])) {
++					if (sync_test_and_clear_bit(bit,
++						(unsigned long *)
++						&recvInterruptPage[dword])) {
+ 						relid = (dword << 5) + bit;
+ 						DPRINT_DBG(VMBUS, "event detected for relid - %d", relid);
+ 
+@@ -337,7 +339,7 @@ int VmbusSetEvent(u32 childRelId)
+ 	DPRINT_ENTER(VMBUS);
+ 
+ 	/* Each u32 represents 32 channels */
+-	set_bit(childRelId & 31,
++	sync_set_bit(childRelId & 31,
+ 		(unsigned long *)gVmbusConnection.SendInterruptPage +
+ 		(childRelId >> 5));
+ 
+diff --git a/drivers/staging/hv/vmbus.c b/drivers/staging/hv/vmbus.c
+index 007543b..08a0c59 100644
+--- a/drivers/staging/hv/vmbus.c
++++ b/drivers/staging/hv/vmbus.c
+@@ -254,7 +254,7 @@ static int VmbusOnISR(struct hv_driver *drv)
+ 	event = (union hv_synic_event_flags *)page_addr + VMBUS_MESSAGE_SINT;
+ 
+ 	/* Since we are a child, we only need to check bit 0 */
+-	if (test_and_clear_bit(0, (unsigned long *) &event->Flags32[0])) {
++	if (sync_test_and_clear_bit(0, (unsigned long *) &event->Flags32[0])) {
+ 		DPRINT_DBG(VMBUS, "received event %d", event->Flags32[0]);
+ 		ret |= 0x2;
+ 	}
+diff --git a/drivers/staging/hv/vmbus_private.h b/drivers/staging/hv/vmbus_private.h
+index 588c667..90d58dd 100644
+--- a/drivers/staging/hv/vmbus_private.h
++++ b/drivers/staging/hv/vmbus_private.h
+@@ -32,6 +32,7 @@
+ #include "channel_interface.h"
+ #include "ring_buffer.h"
+ #include <linux/list.h>
++#include <asm/sync_bitops.h>
+ 
+ 
+ /*
+-- 
+1.8.1.5
+

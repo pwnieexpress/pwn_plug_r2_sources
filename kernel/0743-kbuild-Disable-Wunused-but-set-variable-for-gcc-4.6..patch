@@ -1,0 +1,40 @@
+From d247496cd6a6a936cee3e1b1a28ea5139515e156 Mon Sep 17 00:00:00 2001
+From: Dave Jones <davej@redhat.com>
+Date: Thu, 21 Apr 2011 17:28:13 -0400
+Subject: [PATCH 743/984] kbuild: Disable -Wunused-but-set-variable for gcc
+ 4.6.0
+
+[ upstream commit af0e5d565d2fffcd97d1e2d89669d627cc04e8b8 ]
+
+Disable the new -Wunused-but-set-variable that was added in gcc 4.6.0
+It produces more false positives than useful warnings.
+
+This can still be enabled using W=1
+
+[AK: dropped W=1 support in backport]
+Signed-off-by: Dave Jones <davej@redhat.com>
+Acked-by: Sam Ravnborg <sam@ravnborg.org>
+Tested-by: Sam Ravnborg <sam@ravnborg.org>
+Signed-off-by: Michal Marek <mmarek@suse.cz>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ Makefile | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/Makefile b/Makefile
+index 5ade818..1d483a7 100644
+--- a/Makefile
++++ b/Makefile
+@@ -546,6 +546,9 @@ ifndef CONFIG_CC_STACKPROTECTOR
+ KBUILD_CFLAGS += $(call cc-option, -fno-stack-protector)
+ endif
+ 
++# This warning generated too much noise in a regular build.
++KBUILD_CFLAGS += $(call cc-option, -Wno-unused-but-set-variable)
++
+ ifdef CONFIG_FRAME_POINTER
+ KBUILD_CFLAGS	+= -fno-omit-frame-pointer -fno-optimize-sibling-calls
+ else
+-- 
+1.8.1.5
+

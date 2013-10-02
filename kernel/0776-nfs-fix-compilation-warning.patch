@@ -1,0 +1,34 @@
+From 36a01162f9a6d45d87ffe118f72ec9bc9853acdf Mon Sep 17 00:00:00 2001
+From: Jovi Zhang <bookjovi@gmail.com>
+Date: Wed, 2 Mar 2011 23:19:37 +0000
+Subject: [PATCH 776/984] nfs: fix compilation warning
+
+commit 43b7c3f051dea504afccc39bcb56d8e26c2e0b77 upstream.
+
+this commit fix compilation warning as following:
+linux-2.6/fs/nfs/nfs4proc.c:3265: warning: comparison of distinct pointer types lacks a cast
+
+Signed-off-by: Jovi Zhang <bookjovi@gmail.com>
+Signed-off-by: Trond Myklebust <Trond.Myklebust@netapp.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ fs/nfs/nfs4proc.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/nfs/nfs4proc.c b/fs/nfs/nfs4proc.c
+index b9f6ab6..80943d8 100644
+--- a/fs/nfs/nfs4proc.c
++++ b/fs/nfs/nfs4proc.c
+@@ -3284,7 +3284,7 @@ static int buf_to_pages_noslab(const void *buf, size_t buflen,
+ 	spages = pages;
+ 
+ 	do {
+-		len = min(PAGE_CACHE_SIZE, buflen);
++		len = min_t(size_t, PAGE_CACHE_SIZE, buflen);
+ 		newpage = alloc_page(GFP_KERNEL);
+ 
+ 		if (newpage == NULL)
+-- 
+1.8.1.5
+

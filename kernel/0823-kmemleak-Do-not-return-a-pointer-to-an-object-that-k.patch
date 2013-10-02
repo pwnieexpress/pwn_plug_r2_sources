@@ -1,0 +1,45 @@
+From 465e9df58b3007510231e030db6f622f4a46a6ac Mon Sep 17 00:00:00 2001
+From: Catalin Marinas <catalin.marinas@arm.com>
+Date: Wed, 27 Apr 2011 16:44:26 +0100
+Subject: [PATCH 823/984] kmemleak: Do not return a pointer to an object that
+ kmemleak did not get
+
+commit 52c3ce4ec5601ee383a14f1485f6bac7b278896e upstream.
+
+The kmemleak_seq_next() function tries to get an object (and increment
+its use count) before returning it. If it could not get the last object
+during list traversal (because it may have been freed), the function
+should return NULL rather than a pointer to such object that it did not
+get.
+
+Signed-off-by: Catalin Marinas <catalin.marinas@arm.com>
+Reported-by: Phil Carmody <ext-phil.2.carmody@nokia.com>
+Acked-by: Phil Carmody <ext-phil.2.carmody@nokia.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ mm/kmemleak.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/mm/kmemleak.c b/mm/kmemleak.c
+index 2c0d032..49c94b5 100644
+--- a/mm/kmemleak.c
++++ b/mm/kmemleak.c
+@@ -1368,9 +1368,12 @@ static void *kmemleak_seq_next(struct seq_file *seq, void *v, loff_t *pos)
+ 	++(*pos);
+ 
+ 	list_for_each_continue_rcu(n, &object_list) {
+-		next_obj = list_entry(n, struct kmemleak_object, object_list);
+-		if (get_object(next_obj))
++		struct kmemleak_object *obj =
++			list_entry(n, struct kmemleak_object, object_list);
++		if (get_object(obj)) {
++			next_obj = obj;
+ 			break;
++		}
+ 	}
+ 
+ 	put_object(prev_obj);
+-- 
+1.8.1.5
+

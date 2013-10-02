@@ -1,0 +1,44 @@
+From 78823deddd26e3e59ed15dee48520c03897030e2 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Wed, 23 Feb 2011 11:19:17 -0300
+Subject: [PATCH 730/984] uvcvideo: Fix descriptor parsing for video output
+ devices
+
+commit 4093a5c4a3f59cba1a085bbf87b6ffdddc5a443d upstream.
+
+Commit 4057ac6ca9a77c4275b34b5925ab5c99557913b1
+
+    V4L/DVB (13505): uvcvideo: Refactor chain scan
+
+broke output terminals parsing. Fix it.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab@redhat.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/media/video/uvc/uvc_driver.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/media/video/uvc/uvc_driver.c b/drivers/media/video/uvc/uvc_driver.c
+index 838b56f..e24f913 100644
+--- a/drivers/media/video/uvc/uvc_driver.c
++++ b/drivers/media/video/uvc/uvc_driver.c
+@@ -1261,6 +1261,14 @@ static int uvc_scan_chain_entity(struct uvc_video_chain *chain,
+ 
+ 		break;
+ 
++	case UVC_OTT_VENDOR_SPECIFIC:
++	case UVC_OTT_DISPLAY:
++	case UVC_OTT_MEDIA_TRANSPORT_OUTPUT:
++		if (uvc_trace_param & UVC_TRACE_PROBE)
++			printk(" OT %d", entity->id);
++
++		break;
++
+ 	case UVC_TT_STREAMING:
+ 		if (UVC_ENTITY_IS_ITERM(entity)) {
+ 			if (uvc_trace_param & UVC_TRACE_PROBE)
+-- 
+1.8.1.5
+

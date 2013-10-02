@@ -1,0 +1,82 @@
+From c2bce5c31e51c5a5852d4c6c84c5cec4f69539e6 Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Fri, 4 Feb 2011 13:19:20 +0100
+Subject: [PATCH 896/984] genirq: Add IRQF_FORCE_RESUME
+
+commit dc5f219e88294b93009eef946251251ffffb6d60 upstream.
+
+Xen needs to reenable interrupts which are marked IRQF_NO_SUSPEND in the
+resume path. Add a flag to force the reenabling in the resume code.
+
+Tested-and-acked-by: Ian Campbell <Ian.Campbell@eu.citrix.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Stefan Bader <stefan.bader@canonical.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ include/linux/interrupt.h |  3 ++-
+ kernel/irq/manage.c       | 11 ++++++++++-
+ kernel/irq/pm.c           |  3 ---
+ 3 files changed, 12 insertions(+), 5 deletions(-)
+
+diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
+index a0384a4..146712c 100644
+--- a/include/linux/interrupt.h
++++ b/include/linux/interrupt.h
+@@ -54,7 +54,7 @@
+  *                Used by threaded interrupts which need to keep the
+  *                irq line disabled until the threaded handler has been run.
+  * IRQF_NO_SUSPEND - Do not disable this IRQ during suspend
+- *
++ * IRQF_FORCE_RESUME - Force enable it on resume even if IRQF_NO_SUSPEND is set
+  */
+ #define IRQF_DISABLED		0x00000020
+ #define IRQF_SAMPLE_RANDOM	0x00000040
+@@ -66,6 +66,7 @@
+ #define IRQF_IRQPOLL		0x00001000
+ #define IRQF_ONESHOT		0x00002000
+ #define IRQF_NO_SUSPEND		0x00004000
++#define IRQF_FORCE_RESUME	0x00008000
+ 
+ #define IRQF_TIMER		(__IRQF_TIMER | IRQF_NO_SUSPEND)
+ 
+diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+index 6a2281f..a6a8b6a 100644
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -281,8 +281,17 @@ EXPORT_SYMBOL(disable_irq);
+ 
+ void __enable_irq(struct irq_desc *desc, unsigned int irq, bool resume)
+ {
+-	if (resume)
++	if (resume) {
++		if (!(desc->status & IRQ_SUSPENDED)) {
++			if (!desc->action)
++				return;
++			if (!(desc->action->flags & IRQF_FORCE_RESUME))
++				return;
++			/* Pretend that it got disabled ! */
++			desc->depth++;
++		}
+ 		desc->status &= ~IRQ_SUSPENDED;
++	}
+ 
+ 	switch (desc->depth) {
+ 	case 0:
+diff --git a/kernel/irq/pm.c b/kernel/irq/pm.c
+index 0d4005d8..d6bfb89 100644
+--- a/kernel/irq/pm.c
++++ b/kernel/irq/pm.c
+@@ -53,9 +53,6 @@ void resume_device_irqs(void)
+ 	for_each_irq_desc(irq, desc) {
+ 		unsigned long flags;
+ 
+-		if (!(desc->status & IRQ_SUSPENDED))
+-			continue;
+-
+ 		raw_spin_lock_irqsave(&desc->lock, flags);
+ 		__enable_irq(desc, irq, true);
+ 		raw_spin_unlock_irqrestore(&desc->lock, flags);
+-- 
+1.8.1.5
+

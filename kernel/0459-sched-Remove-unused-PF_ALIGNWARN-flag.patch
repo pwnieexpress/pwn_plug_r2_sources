@@ -1,0 +1,43 @@
+From aa42a9b327e862d49d3695fe88b6833d18ecd285 Mon Sep 17 00:00:00 2001
+From: Dave Young <hidave.darkstar@gmail.com>
+Date: Thu, 10 Feb 2011 10:23:26 +0100
+Subject: [PATCH 459/984] sched: Remove unused PF_ALIGNWARN flag
+
+Commit: 637bbdc5b83615ef9f45f50399d1c7f27473c713 upstream
+
+PF_ALIGNWARN is not implemented and it is for 486 as the
+comment.
+
+It is not likely someone will implement this flag feature.
+So here remove this flag and leave the valuable 0x00000001 for
+future use.
+
+Signed-off-by: Dave Young <hidave.darkstar@gmail.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+LKML-Reference: <20100913121903.GB22238@darkstar>
+Signed-off-by: Ingo Molnar <mingo@elte.hu>
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+Acked-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+ include/linux/sched.h | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index c5baae6..251f1ca 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1685,8 +1685,6 @@ extern void thread_group_times(struct task_struct *p, cputime_t *ut, cputime_t *
+ /*
+  * Per process flags
+  */
+-#define PF_ALIGNWARN	0x00000001	/* Print alignment warning msgs */
+-					/* Not implemented yet, only for 486*/
+ #define PF_STARTING	0x00000002	/* being created */
+ #define PF_EXITING	0x00000004	/* getting shut down */
+ #define PF_EXITPIDONE	0x00000008	/* pi exit done on shut down */
+-- 
+1.8.1.5
+

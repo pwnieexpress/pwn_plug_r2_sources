@@ -1,0 +1,38 @@
+From ea626c8fccc5b119bf1d398d99e7ecad4bfc95e2 Mon Sep 17 00:00:00 2001
+From: Thomas Graf <tgraf@infradead.org>
+Date: Fri, 3 Sep 2010 03:04:20 +0000
+Subject: [PATCH 981/984] ipv6: add special mode forwarding=2 to send RS while
+
+[ upstream commit c3bccac2fa76f1619dfe4fb7b9bee69de7f066d8 ]
+ configured as router
+
+Similar to accepting router advertisement, the IPv6 stack does not send router
+solicitations if forwarding is enabled.
+
+This patch enables this behavior to be overruled by setting forwarding to the
+special value 2.
+
+Signed-off-by: Thomas Graf <tgraf@infradead.org>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/ipv6/addrconf.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/net/ipv6/addrconf.c b/net/ipv6/addrconf.c
+index b5ab939..5d59520 100644
+--- a/net/ipv6/addrconf.c
++++ b/net/ipv6/addrconf.c
+@@ -2960,7 +2960,8 @@ static void addrconf_dad_completed(struct inet6_ifaddr *ifp)
+ 	   start sending router solicitations.
+ 	 */
+ 
+-	if (ifp->idev->cnf.forwarding == 0 &&
++	if ((ifp->idev->cnf.forwarding == 0 ||
++	     ifp->idev->cnf.forwarding == 2) &&
+ 	    ifp->idev->cnf.rtr_solicits > 0 &&
+ 	    (dev->flags&IFF_LOOPBACK) == 0 &&
+ 	    (ipv6_addr_type(&ifp->addr) & IPV6_ADDR_LINKLOCAL)) {
+-- 
+1.8.1.5
+

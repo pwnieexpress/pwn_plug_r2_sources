@@ -1,0 +1,39 @@
+From e0026eb67a332b6ab0f2e61838aeba1b15604696 Mon Sep 17 00:00:00 2001
+From: Andrew Vasquez <andrew.vasquez@qlogic.com>
+Date: Fri, 28 May 2010 15:08:22 -0700
+Subject: [PATCH 635/984] qla2xxx: Make the FC port capability mutual
+ exclusive.
+
+[ upstream commit b0cd579cde8ee0c7ed52239531ba09bcbc5b54c2 ]
+
+In case of both target and initiator capabilities reported by fc port,
+the fc port port capability is made mutualy exclusive with priority given
+for target capabilities.
+
+Signed-off-by: Giridhar Malavali <giridhar.malavali@qlogic.com>
+Signed-off-by: James Bottomley <James.Bottomley@suse.de>
+Acked-by: Madhuranath Iyengar <Madhu.Iyengar@qlogic.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/scsi/qla2xxx/qla_isr.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/scsi/qla2xxx/qla_isr.c b/drivers/scsi/qla2xxx/qla_isr.c
+index be3d8be..f347ea4 100644
+--- a/drivers/scsi/qla2xxx/qla_isr.c
++++ b/drivers/scsi/qla2xxx/qla_isr.c
+@@ -1119,9 +1119,9 @@ qla24xx_logio_entry(scsi_qla_host_t *vha, struct req_que *req,
+ 			fcport->port_type = FCT_TARGET;
+ 			if (iop[0] & BIT_8)
+ 				fcport->flags |= FCF_FCP2_DEVICE;
+-		}
+-		if (iop[0] & BIT_5)
++		} else if (iop[0] & BIT_5)
+ 			fcport->port_type = FCT_INITIATOR;
++
+ 		if (logio->io_parameter[7] || logio->io_parameter[8])
+ 			fcport->supported_classes |= FC_COS_CLASS2;
+ 		if (logio->io_parameter[9] || logio->io_parameter[10])
+-- 
+1.8.1.5
+

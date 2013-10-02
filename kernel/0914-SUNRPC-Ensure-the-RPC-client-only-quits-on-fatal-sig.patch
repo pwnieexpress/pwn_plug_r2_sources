@@ -1,0 +1,55 @@
+From 0d1ae88bf82c77ded2bf12c6e23d3cd7364bb1b4 Mon Sep 17 00:00:00 2001
+From: Trond Myklebust <Trond.Myklebust@netapp.com>
+Date: Fri, 17 Jun 2011 10:14:59 -0400
+Subject: [PATCH 914/984] SUNRPC: Ensure the RPC client only quits on fatal
+ signals
+
+commit 5afa9133cfe67f1bfead6049a9640c9262a7101c upstream.
+
+Fix a couple of instances where we were exiting the RPC client on
+arbitrary signals. We should only do so on fatal signals.
+
+Signed-off-by: Trond Myklebust <Trond.Myklebust@netapp.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/sunrpc/auth_gss/auth_gss.c | 4 ++--
+ net/sunrpc/clnt.c              | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/net/sunrpc/auth_gss/auth_gss.c b/net/sunrpc/auth_gss/auth_gss.c
+index 5359f36..c6fda09 100644
+--- a/net/sunrpc/auth_gss/auth_gss.c
++++ b/net/sunrpc/auth_gss/auth_gss.c
+@@ -575,13 +575,13 @@ retry:
+ 	}
+ 	inode = &gss_msg->inode->vfs_inode;
+ 	for (;;) {
+-		prepare_to_wait(&gss_msg->waitqueue, &wait, TASK_INTERRUPTIBLE);
++		prepare_to_wait(&gss_msg->waitqueue, &wait, TASK_KILLABLE);
+ 		spin_lock(&inode->i_lock);
+ 		if (gss_msg->ctx != NULL || gss_msg->msg.errno < 0) {
+ 			break;
+ 		}
+ 		spin_unlock(&inode->i_lock);
+-		if (signalled()) {
++		if (fatal_signal_pending(current)) {
+ 			err = -ERESTARTSYS;
+ 			goto out_intr;
+ 		}
+diff --git a/net/sunrpc/clnt.c b/net/sunrpc/clnt.c
+index 756fc32..5018acd 100644
+--- a/net/sunrpc/clnt.c
++++ b/net/sunrpc/clnt.c
+@@ -928,7 +928,7 @@ call_allocate(struct rpc_task *task)
+ 
+ 	dprintk("RPC: %5u rpc_buffer allocation failed\n", task->tk_pid);
+ 
+-	if (RPC_IS_ASYNC(task) || !signalled()) {
++	if (RPC_IS_ASYNC(task) || !fatal_signal_pending(current)) {
+ 		task->tk_action = call_allocate;
+ 		rpc_delay(task, HZ>>4);
+ 		return;
+-- 
+1.8.1.5
+

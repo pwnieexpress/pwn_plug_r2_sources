@@ -1,0 +1,31 @@
+From 993788a53aa0c8efd14922e799e0764220fa5a33 Mon Sep 17 00:00:00 2001
+From: "David S. Miller" <davem@davemloft.net>
+Date: Wed, 16 Jun 2010 16:18:25 -0700
+Subject: [PATCH 277/984] net: Export cred_to_ucred to modules.
+
+Upstream commit 3924773a5a82622167524bdd48799dc0452c57f8
+
+AF_UNIX references this, and can be built as a module,
+so...
+
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/core/sock.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/net/core/sock.c b/net/core/sock.c
+index 50197eb..e734700 100644
+--- a/net/core/sock.c
++++ b/net/core/sock.c
+@@ -762,6 +762,7 @@ void cred_to_ucred(struct pid *pid, const struct cred *cred,
+ 		ucred->gid = user_ns_map_gid(current_ns, cred, cred->egid);
+ 	}
+ }
++EXPORT_SYMBOL_GPL(cred_to_ucred);
+ 
+ int sock_getsockopt(struct socket *sock, int level, int optname,
+ 		    char __user *optval, int __user *optlen)
+-- 
+1.8.1.5
+

@@ -1,0 +1,51 @@
+From ed0afb9880641cc6a22a46b75fcaca67728ce41b Mon Sep 17 00:00:00 2001
+From: Li Zefan <lizf@cn.fujitsu.com>
+Date: Fri, 4 Mar 2011 17:36:21 -0800
+Subject: [PATCH 532/984] cpuset: add a missing unlock in
+ cpuset_write_resmask()
+
+commit b75f38d659e6fc747eda64cb72f3920e29dd44a4 upstream.
+
+Don't forget to release cgroup_mutex if alloc_trial_cpuset() fails.
+
+[akpm@linux-foundation.org: avoid multiple return points]
+Signed-off-by: Li Zefan <lizf@cn.fujitsu.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+Cc: Paul Menage <menage@google.com>
+Acked-by: David Rientjes <rientjes@google.com>
+Cc: Miao Xie <miaox@cn.fujitsu.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+ kernel/cpuset.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/kernel/cpuset.c b/kernel/cpuset.c
+index 02b9611..8c781d5 100644
+--- a/kernel/cpuset.c
++++ b/kernel/cpuset.c
+@@ -1576,8 +1576,10 @@ static int cpuset_write_resmask(struct cgroup *cgrp, struct cftype *cft,
+ 		return -ENODEV;
+ 
+ 	trialcs = alloc_trial_cpuset(cs);
+-	if (!trialcs)
+-		return -ENOMEM;
++	if (!trialcs) {
++		retval = -ENOMEM;
++		goto out;
++	}
+ 
+ 	switch (cft->private) {
+ 	case FILE_CPULIST:
+@@ -1592,6 +1594,7 @@ static int cpuset_write_resmask(struct cgroup *cgrp, struct cftype *cft,
+ 	}
+ 
+ 	free_trial_cpuset(trialcs);
++out:
+ 	cgroup_unlock();
+ 	return retval;
+ }
+-- 
+1.8.1.5
+

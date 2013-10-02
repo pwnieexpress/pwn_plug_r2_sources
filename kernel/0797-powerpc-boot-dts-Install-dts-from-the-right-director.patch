@@ -1,0 +1,39 @@
+From b234a8154e569f4cf63320e3acb5fee737a34b71 Mon Sep 17 00:00:00 2001
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Sat, 8 Jan 2011 14:24:01 +0000
+Subject: [PATCH 797/984] powerpc/boot/dts: Install dts from the right
+ directory
+
+commit 4d9ef89dee13e964ea8b064d82ff55cf36209237 upstream.
+
+The dts-installed variable is initialised using a wildcard path that
+will be expanded relative to the build directory.  Use the existing
+variable dtstree to generate an absolute wildcard path that will work
+when building in a separate directory.
+
+Reported-by: Gerhard Pircher <gerhard_pircher@gmx.net>
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+Tested-by: Gerhard Pircher <gerhard_pircher@gmx.net> [against 2.6.32]
+Signed-off-by: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ arch/powerpc/boot/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/powerpc/boot/Makefile b/arch/powerpc/boot/Makefile
+index fae8192..2d8a80b 100644
+--- a/arch/powerpc/boot/Makefile
++++ b/arch/powerpc/boot/Makefile
+@@ -370,7 +370,7 @@ INSTALL := install
+ extra-installed		:= $(patsubst $(obj)/%, $(DESTDIR)$(WRAPPER_OBJDIR)/%, $(extra-y))
+ hostprogs-installed	:= $(patsubst %, $(DESTDIR)$(WRAPPER_BINDIR)/%, $(hostprogs-y))
+ wrapper-installed	:= $(DESTDIR)$(WRAPPER_BINDIR)/wrapper
+-dts-installed		:= $(patsubst $(obj)/dts/%, $(DESTDIR)$(WRAPPER_DTSDIR)/%, $(wildcard $(obj)/dts/*.dts))
++dts-installed		:= $(patsubst $(dtstree)/%, $(DESTDIR)$(WRAPPER_DTSDIR)/%, $(wildcard $(dtstree)/*.dts))
+ 
+ all-installed		:= $(extra-installed) $(hostprogs-installed) $(wrapper-installed) $(dts-installed)
+ 
+-- 
+1.8.1.5
+

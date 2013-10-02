@@ -1,0 +1,43 @@
+From 7d5fdc4f5641f5e3046a4f4c614157b08e6ce53c Mon Sep 17 00:00:00 2001
+From: Samuel Thibault <samuel.thibault@ens-lyon.org>
+Date: Wed, 18 May 2011 17:06:05 +0200
+Subject: [PATCH 835/984] Fix Ultrastor asm snippet
+
+commit fad4dab5e44e10acf6b0235e469cb8e773b58e31 upstream.
+
+Commit 1292500b replaced
+
+"=m" (*field) : "1" (*field)
+
+with
+
+"=m" (*field) :
+
+with comment "The following patch fixes it by using the '+' operator on
+the (*field) operand, marking it as read-write to gcc."
+'+' was actually forgotten.  This really puts it.
+
+Signed-off-by: Samuel Thibault <samuel.thibault@ens-lyon.org>
+Signed-off-by: James Bottomley <jbottomley@parallels.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/scsi/ultrastor.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/scsi/ultrastor.c b/drivers/scsi/ultrastor.c
+index 27aa40f..7f0eda2 100644
+--- a/drivers/scsi/ultrastor.c
++++ b/drivers/scsi/ultrastor.c
+@@ -306,7 +306,7 @@ static inline int find_and_clear_bit_16(unsigned long *field)
+ 	"0: bsfw %1,%w0\n\t"
+ 	"btr %0,%1\n\t"
+ 	"jnc 0b"
+-	: "=&r" (rv), "=m" (*field) :);
++	: "=&r" (rv), "+m" (*field) :);
+ 
+   return rv;
+ }
+-- 
+1.8.1.5
+

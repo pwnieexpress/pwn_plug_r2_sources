@@ -1,0 +1,28 @@
+From d6c90f5b218c1ddf1496045e3939b1c960c7cb9f Mon Sep 17 00:00:00 2001
+From: Andi Kleen <andi@firstfloor.org>
+Date: Sun, 6 Feb 2011 11:04:07 -0800
+Subject: [PATCH 360/984] Release 2.6.35.11
+
+Release 2.6.35.11
+
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 6538501..78daa86 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,7 +1,7 @@
+ VERSION = 2
+ PATCHLEVEL = 6
+ SUBLEVEL = 35
+-EXTRAVERSION = .10
++EXTRAVERSION = .11
+ NAME = Yokohama
+ 
+ # *DOCUMENTATION*
+-- 
+1.8.1.5
+

@@ -1,0 +1,37 @@
+From faf71f45b0485c3d97ed987489185288ba94b638 Mon Sep 17 00:00:00 2001
+From: Vasiliy Kulikov <segoon@openwall.com>
+Date: Tue, 22 Mar 2011 16:34:53 -0700
+Subject: [PATCH 668/984] drivers/rtc/rtc-ds1511.c: world-writable sysfs nvram
+ file
+
+commit 49d50fb1c28738ef6bad0c2b87d5355a1653fed5 upstream.
+
+Don't allow everybogy to write to NVRAM.
+
+Signed-off-by: Vasiliy Kulikov <segoon@openwall.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+Cc: Andy Sharp <andy.sharp@onstor.com>
+Cc: Alessandro Zummo <a.zummo@towertech.it>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+ drivers/rtc/rtc-ds1511.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/rtc/rtc-ds1511.c b/drivers/rtc/rtc-ds1511.c
+index 37268e9..afeb546 100644
+--- a/drivers/rtc/rtc-ds1511.c
++++ b/drivers/rtc/rtc-ds1511.c
+@@ -485,7 +485,7 @@ ds1511_nvram_write(struct file *filp, struct kobject *kobj,
+ static struct bin_attribute ds1511_nvram_attr = {
+ 	.attr = {
+ 		.name = "nvram",
+-		.mode = S_IRUGO | S_IWUGO,
++		.mode = S_IRUGO | S_IWUSR,
+ 	},
+ 	.size = DS1511_RAM_MAX,
+ 	.read = ds1511_nvram_read,
+-- 
+1.8.1.5
+

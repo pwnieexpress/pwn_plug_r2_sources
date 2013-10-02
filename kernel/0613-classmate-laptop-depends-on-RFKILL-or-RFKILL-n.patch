@@ -1,0 +1,39 @@
+From 79a03efd3311c204f22e92cdf1a4c0d63e1c759c Mon Sep 17 00:00:00 2001
+From: Thadeu Lima de Souza Cascardo <cascardo@holoscopio.com>
+Date: Wed, 26 May 2010 12:00:10 -0300
+Subject: [PATCH 613/984] classmate-laptop: depends on RFKILL or RFKILL=n
+
+[ upstream commit f35843ed8d17562f7c5da4b34a4a81b0cc450e9e ]
+
+Randy Dunlap has reported that building classmate-laptop fails when
+CONFIG_RFKILL=m and CONFIG_ACPI_CMPC=y. He suggested depending on
+RFKILL, but, then, it will not be possible to select classmate-laptop
+when RFKILL is off. There's no known problem with building and using
+classmate-laptop with RFKILL off. So depend on RFKILL or RFKILL=n.
+
+Signed-off-by: Thadeu Lima de Souza Cascardo <cascardo@holoscopio.com>
+Signed-off-by: Matthew Garrett <mjg@redhat.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+Reported-by: Randy Dunlap <randy.dunlap@oracle.com>
+Cc: Randy Dunlap <randy.dunlap@oracle.com>
+Cc: platform-driver-x86@vger.kernel.org
+Cc: Daniel Oliveira Nascimento <don@syst.com.br>
+---
+ drivers/platform/x86/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/platform/x86/Kconfig b/drivers/platform/x86/Kconfig
+index 3e1b8a2..fe7d670 100644
+--- a/drivers/platform/x86/Kconfig
++++ b/drivers/platform/x86/Kconfig
+@@ -520,6 +520,7 @@ config TOSHIBA_BT_RFKILL
+ config ACPI_CMPC
+ 	tristate "CMPC Laptop Extras"
+ 	depends on X86 && ACPI
++	depends on RFKILL || RFKILL=n
+ 	select INPUT
+ 	select BACKLIGHT_CLASS_DEVICE
+ 	default n
+-- 
+1.8.1.5
+

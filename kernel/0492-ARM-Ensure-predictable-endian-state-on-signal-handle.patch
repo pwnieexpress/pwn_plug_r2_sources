@@ -1,0 +1,39 @@
+From 7d13ddf6579f7a201201765315cf1a969226dde7 Mon Sep 17 00:00:00 2001
+From: Russell King <rmk+kernel@arm.linux.org.uk>
+Date: Sun, 20 Feb 2011 12:22:52 +0000
+Subject: [PATCH 492/984] ARM: Ensure predictable endian state on signal
+ handler entry
+
+commit 53399053eb505cf541b2405bd9d9bca5ecfb96fb upstream.
+
+Ensure a predictable endian state when entering signal handlers.  This
+avoids programs which use SETEND to momentarily switch their endian
+state from having their signal handlers entered with an unpredictable
+endian state.
+
+Acked-by: Dave Martin <dave.martin@linaro.org>
+Signed-off-by: Russell King <rmk+kernel@arm.linux.org.uk>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ arch/arm/kernel/signal.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm/kernel/signal.c b/arch/arm/kernel/signal.c
+index 907d5a6..abaf844 100644
+--- a/arch/arm/kernel/signal.c
++++ b/arch/arm/kernel/signal.c
+@@ -474,7 +474,9 @@ setup_return(struct pt_regs *regs, struct k_sigaction *ka,
+ 	unsigned long handler = (unsigned long)ka->sa.sa_handler;
+ 	unsigned long retcode;
+ 	int thumb = 0;
+-	unsigned long cpsr = regs->ARM_cpsr & ~PSR_f;
++	unsigned long cpsr = regs->ARM_cpsr & ~(PSR_f | PSR_E_BIT);
++
++	cpsr |= PSR_ENDSTATE;
+ 
+ 	/*
+ 	 * Maybe we need to deliver a 32-bit signal to a 26-bit task.
+-- 
+1.8.1.5
+

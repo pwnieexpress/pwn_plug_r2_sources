@@ -1,0 +1,35 @@
+From 507e949027b3dc00f56a1c91b88c2d899e9eaea0 Mon Sep 17 00:00:00 2001
+From: Mark Brown <broonie@opensource.wolfsonmicro.com>
+Date: Fri, 1 Jul 2011 17:24:46 -0700
+Subject: [PATCH 978/984] ASoC: Ensure we delay long enough for WM8994 FLL to
+ lock
+
+[ upstream commit 8e9ddf811ba021506d2316fcfe619faa0ab3f567 ]
+ when starting
+
+This delay is very conservative.
+
+Signed-off-by: Mark Brown <broonie@opensource.wolfsonmicro.com>
+Acked-by: Liam Girdwood <lrg@ti.com>
+Cc: stable@kernel.org
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ sound/soc/codecs/wm8994.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/sound/soc/codecs/wm8994.c b/sound/soc/codecs/wm8994.c
+index e84a117..b458dc7 100644
+--- a/sound/soc/codecs/wm8994.c
++++ b/sound/soc/codecs/wm8994.c
+@@ -2929,6 +2929,8 @@ static int wm8994_set_fll(struct snd_soc_dai *dai, int id, int src,
+ 		snd_soc_update_bits(codec, WM8994_FLL1_CONTROL_1 + reg_offset,
+ 				    WM8994_FLL1_ENA | WM8994_FLL1_FRAC,
+ 				    reg);
++
++		msleep(5);
+ 	}
+ 
+ 	wm8994->fll[id].in = freq_in;
+-- 
+1.8.1.5
+

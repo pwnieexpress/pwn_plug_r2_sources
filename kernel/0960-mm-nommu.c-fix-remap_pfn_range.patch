@@ -1,0 +1,56 @@
+From 8f8d6bc6ec9510a3bd8d97e011c7dc6008a7355d Mon Sep 17 00:00:00 2001
+From: Bob Liu <lliubbo@gmail.com>
+Date: Fri, 8 Jul 2011 15:39:46 -0700
+Subject: [PATCH 960/984] mm/nommu.c: fix remap_pfn_range()
+
+[ upstream commit 8f3b1327aa454bc8283e96bca7669c3c88b83f79 ]
+
+remap_pfn_range() means map physical address pfn<<PAGE_SHIFT to user addr.
+
+For nommu arch it's implemented by vma->vm_start = pfn << PAGE_SHIFT which
+is wrong acroding the original meaning of this function.  And some driver
+developer using remap_pfn_range() with correct parameter will get
+unexpected result because vm_start is changed.  It should be implementd
+like addr = pfn << PAGE_SHIFT but which is meanless on nommu arch, this
+patch just make it simply return.
+
+Parameter name and setting of vma->vm_flags also be fixed.
+
+Signed-off-by: Bob Liu <lliubbo@gmail.com>
+Cc: Geert Uytterhoeven <geert@linux-m68k.org>
+Cc: David Howells <dhowells@redhat.com>
+Acked-by: Greg Ungerer <gerg@uclinux.org>
+Cc: Mike Frysinger <vapier@gentoo.org>
+Cc: Bob Liu <lliubbo@gmail.com>
+Cc: <stable@kernel.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ mm/nommu.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/mm/nommu.c b/mm/nommu.c
+index 3e18548..fbdb2e7 100644
+--- a/mm/nommu.c
++++ b/mm/nommu.c
+@@ -1747,10 +1747,13 @@ struct page *follow_page(struct vm_area_struct *vma, unsigned long address,
+ 	return NULL;
+ }
+ 
+-int remap_pfn_range(struct vm_area_struct *vma, unsigned long from,
+-		unsigned long to, unsigned long size, pgprot_t prot)
++int remap_pfn_range(struct vm_area_struct *vma, unsigned long addr,
++		unsigned long pfn, unsigned long size, pgprot_t prot)
+ {
+-	vma->vm_start = vma->vm_pgoff << PAGE_SHIFT;
++	if (addr != (pfn << PAGE_SHIFT))
++		return -EINVAL;
++
++	vma->vm_flags |= VM_IO | VM_RESERVED | VM_PFNMAP;
+ 	return 0;
+ }
+ EXPORT_SYMBOL(remap_pfn_range);
+-- 
+1.8.1.5
+

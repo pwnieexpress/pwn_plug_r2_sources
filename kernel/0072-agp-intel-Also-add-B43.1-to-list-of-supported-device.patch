@@ -1,0 +1,34 @@
+From 836263b61726f425f472f5659898db6ec1426dad Mon Sep 17 00:00:00 2001
+From: Chris Wilson <chris@chris-wilson.co.uk>
+Date: Thu, 14 Oct 2010 16:30:41 +0100
+Subject: [PATCH 072/984] agp/intel: Also add B43.1 to list of supported
+ devices
+
+commit 3dde04b0152634d42994b34b86bbf3c70fbc6b19 upstream.
+
+This was a missing piece from 41a5142 that dropped recognition of the
+AGP module for the second B43 variant.
+
+Reported-by: Stefan Bader <stefan.bader@canonical.com>
+Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/char/agp/intel-agp.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/char/agp/intel-agp.c b/drivers/char/agp/intel-agp.c
+index 4187121..e38fe2be 100644
+--- a/drivers/char/agp/intel-agp.c
++++ b/drivers/char/agp/intel-agp.c
+@@ -1048,6 +1048,7 @@ static struct pci_device_id agp_intel_pci_table[] = {
+ 	ID(PCI_DEVICE_ID_INTEL_G45_HB),
+ 	ID(PCI_DEVICE_ID_INTEL_G41_HB),
+ 	ID(PCI_DEVICE_ID_INTEL_B43_HB),
++	ID(PCI_DEVICE_ID_INTEL_B43_1_HB),
+ 	ID(PCI_DEVICE_ID_INTEL_IRONLAKE_D_HB),
+ 	ID(PCI_DEVICE_ID_INTEL_IRONLAKE_M_HB),
+ 	ID(PCI_DEVICE_ID_INTEL_IRONLAKE_MA_HB),
+-- 
+1.8.1.5
+

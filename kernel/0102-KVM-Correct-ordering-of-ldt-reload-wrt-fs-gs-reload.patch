@@ -1,0 +1,62 @@
+From d3f813da18f83a31f2678988b450e6a1c94c95ed Mon Sep 17 00:00:00 2001
+From: Avi Kivity <avi@redhat.com>
+Date: Tue, 19 Oct 2010 18:48:35 +0200
+Subject: [PATCH 102/984] KVM: Correct ordering of ldt reload wrt fs/gs reload
+
+commit 0a77fe4c188e25917799f2356d4aa5e6d80c39a2 upstream.
+
+If fs or gs refer to the ldt, they must be reloaded after the ldt.  Reorder
+the code to that effect.
+
+Userspace code that uses the ldt with kvm is nonexistent, so this doesn't fix
+a user-visible bug.
+
+Signed-off-by: Avi Kivity <avi@redhat.com>
+Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ arch/x86/kvm/svm.c | 2 +-
+ arch/x86/kvm/vmx.c | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/arch/x86/kvm/svm.c b/arch/x86/kvm/svm.c
+index 02a5603..9ca7032 100644
+--- a/arch/x86/kvm/svm.c
++++ b/arch/x86/kvm/svm.c
+@@ -3184,9 +3184,9 @@ static void svm_vcpu_run(struct kvm_vcpu *vcpu)
+ 	vcpu->arch.regs[VCPU_REGS_RSP] = svm->vmcb->save.rsp;
+ 	vcpu->arch.regs[VCPU_REGS_RIP] = svm->vmcb->save.rip;
+ 
++	kvm_load_ldt(ldt_selector);
+ 	kvm_load_fs(fs_selector);
+ 	kvm_load_gs(gs_selector);
+-	kvm_load_ldt(ldt_selector);
+ 	load_host_msrs(vcpu);
+ 
+ 	reload_tss(vcpu);
+diff --git a/arch/x86/kvm/vmx.c b/arch/x86/kvm/vmx.c
+index 7d04388..39ac456 100644
+--- a/arch/x86/kvm/vmx.c
++++ b/arch/x86/kvm/vmx.c
+@@ -791,8 +791,6 @@ static void __vmx_load_host_state(struct vcpu_vmx *vmx)
+ 
+ 	++vmx->vcpu.stat.host_state_reload;
+ 	vmx->host_state.loaded = 0;
+-	if (vmx->host_state.fs_reload_needed)
+-		kvm_load_fs(vmx->host_state.fs_sel);
+ 	if (vmx->host_state.gs_ldt_reload_needed) {
+ 		kvm_load_ldt(vmx->host_state.ldt_sel);
+ 		/*
+@@ -806,6 +804,8 @@ static void __vmx_load_host_state(struct vcpu_vmx *vmx)
+ #endif
+ 		local_irq_restore(flags);
+ 	}
++	if (vmx->host_state.fs_reload_needed)
++		loadsegment(fs, vmx->host_state.fs_sel);
+ 	reload_tss();
+ #ifdef CONFIG_X86_64
+ 	if (is_long_mode(&vmx->vcpu)) {
+-- 
+1.8.1.5
+

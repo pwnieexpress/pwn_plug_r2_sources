@@ -1,0 +1,58 @@
+From 4d6d8747e1fb36b33d77a5182a6305f6839aeae9 Mon Sep 17 00:00:00 2001
+From: Greg Kroah-Hartman <gregkh@suse.de>
+Date: Thu, 16 Dec 2010 15:52:30 -0800
+Subject: [PATCH 320/984] Revert "USB: gadget: Allow function access to device
+ ID data during bind()"
+
+commit dbb442b85a1d82f91cfe0524c4f9b3a5196a10ca upstream.
+
+This reverts commit 1ab83238740ff1e1773d5c13ecac43c60cf4aec4.
+
+Turns out this doesn't allow for the device ids to be overridden
+properly, so we need to revert the thing.
+
+Reported-by: Jef Driesen <jefdriesen@telenet.be>
+Cc: Robert Lukassen <Robert.Lukassen@tomtom.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/usb/gadget/composite.c | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/usb/gadget/composite.c b/drivers/usb/gadget/composite.c
+index 4b02b32..b17e5c1 100644
+--- a/drivers/usb/gadget/composite.c
++++ b/drivers/usb/gadget/composite.c
+@@ -1018,14 +1018,6 @@ static int composite_bind(struct usb_gadget *gadget)
+ 	 */
+ 	usb_ep_autoconfig_reset(cdev->gadget);
+ 
+-	/* standardized runtime overrides for device ID data */
+-	if (idVendor)
+-		cdev->desc.idVendor = cpu_to_le16(idVendor);
+-	if (idProduct)
+-		cdev->desc.idProduct = cpu_to_le16(idProduct);
+-	if (bcdDevice)
+-		cdev->desc.bcdDevice = cpu_to_le16(bcdDevice);
+-
+ 	/* composite gadget needs to assign strings for whole device (like
+ 	 * serial number), register function drivers, potentially update
+ 	 * power state and consumption, etc
+@@ -1037,6 +1029,14 @@ static int composite_bind(struct usb_gadget *gadget)
+ 	cdev->desc = *composite->dev;
+ 	cdev->desc.bMaxPacketSize0 = gadget->ep0->maxpacket;
+ 
++	/* standardized runtime overrides for device ID data */
++	if (idVendor)
++		cdev->desc.idVendor = cpu_to_le16(idVendor);
++	if (idProduct)
++		cdev->desc.idProduct = cpu_to_le16(idProduct);
++	if (bcdDevice)
++		cdev->desc.bcdDevice = cpu_to_le16(bcdDevice);
++
+ 	/* strings can't be assigned before bind() allocates the
+ 	 * releavnt identifiers
+ 	 */
+-- 
+1.8.1.5
+

@@ -1,0 +1,50 @@
+From 94f69b03006a2119db2e7f1f6db453fe58e530b8 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 27 Apr 2011 18:20:44 +0200
+Subject: [PATCH 831/984] ext3: Fix fs corruption when make_indexed_dir() fails
+
+commit 86c4f6d85595cd7da635dc6985d27bfa43b1ae10 upstream.
+
+When make_indexed_dir() fails (e.g. because of ENOSPC) after it has allocated
+block for index tree root, we did not properly mark all changed buffers dirty.
+This lead to only some of these buffers being written out and thus effectively
+corrupting the directory.
+
+Fix the issue by marking all changed data dirty even in the error failure case.
+
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ fs/ext3/namei.c | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/fs/ext3/namei.c b/fs/ext3/namei.c
+index 827b573..7eecac0 100644
+--- a/fs/ext3/namei.c
++++ b/fs/ext3/namei.c
+@@ -1425,10 +1425,19 @@ static int make_indexed_dir(handle_t *handle, struct dentry *dentry,
+ 	frame->at = entries;
+ 	frame->bh = bh;
+ 	bh = bh2;
++	/*
++	 * Mark buffers dirty here so that if do_split() fails we write a
++	 * consistent set of buffers to disk.
++	 */
++	ext3_journal_dirty_metadata(handle, frame->bh);
++	ext3_journal_dirty_metadata(handle, bh);
+ 	de = do_split(handle,dir, &bh, frame, &hinfo, &retval);
+-	dx_release (frames);
+-	if (!(de))
++	if (!de) {
++		ext3_mark_inode_dirty(handle, dir);
++		dx_release(frames);
+ 		return retval;
++	}
++	dx_release(frames);
+ 
+ 	return add_dirent_to_buf(handle, dentry, inode, de, bh);
+ }
+-- 
+1.8.1.5
+

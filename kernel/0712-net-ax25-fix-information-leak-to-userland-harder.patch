@@ -1,0 +1,36 @@
+From 4aa96ce73e0282f556fdc5850313a4d0ca15532f Mon Sep 17 00:00:00 2001
+From: Kees Cook <kees.cook@canonical.com>
+Date: Wed, 12 Jan 2011 00:34:49 -0800
+Subject: [PATCH 712/984] net: ax25: fix information leak to userland harder
+
+commit 5b919f833d9d60588d026ad82d17f17e8872c7a9 upstream.
+
+Commit fe10ae53384e48c51996941b7720ee16995cbcb7 adds a memset() to clear
+the structure being sent back to userspace, but accidentally used the
+wrong size.
+
+Reported-by: Brad Spengler <spender@grsecurity.net>
+Signed-off-by: Kees Cook <kees.cook@canonical.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/ax25/af_ax25.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/ax25/af_ax25.c b/net/ax25/af_ax25.c
+index 6e2371a..763fd0b 100644
+--- a/net/ax25/af_ax25.c
++++ b/net/ax25/af_ax25.c
+@@ -1392,7 +1392,7 @@ static int ax25_getname(struct socket *sock, struct sockaddr *uaddr,
+ 	ax25_cb *ax25;
+ 	int err = 0;
+ 
+-	memset(fsa, 0, sizeof(fsa));
++	memset(fsa, 0, sizeof(*fsa));
+ 	lock_sock(sk);
+ 	ax25 = ax25_sk(sk);
+ 
+-- 
+1.8.1.5
+

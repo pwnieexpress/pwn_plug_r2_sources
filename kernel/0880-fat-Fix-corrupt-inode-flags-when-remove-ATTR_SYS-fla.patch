@@ -1,0 +1,34 @@
+From ff7cb9c3fe433028969fe28b5a542a0477b252b3 Mon Sep 17 00:00:00 2001
+From: OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>
+Date: Tue, 31 May 2011 19:38:07 +0900
+Subject: [PATCH 880/984] fat: Fix corrupt inode flags when remove ATTR_SYS
+ flag
+
+commit 1adffbae22332bb558c2a29de19d9aca391869f6 upstream.
+
+We are clearly missing '~' in fat_ioctl_set_attributes().
+
+Reported-by: Dmitry Dmitriev <dimondmm@yandex.ru>
+Signed-off-by: OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ fs/fat/file.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/fat/file.c b/fs/fat/file.c
+index 990dfae..f288057 100644
+--- a/fs/fat/file.c
++++ b/fs/fat/file.c
+@@ -102,7 +102,7 @@ static int fat_ioctl_set_attributes(struct file *file, u32 __user *user_attr)
+ 		if (attr & ATTR_SYS)
+ 			inode->i_flags |= S_IMMUTABLE;
+ 		else
+-			inode->i_flags &= S_IMMUTABLE;
++			inode->i_flags &= ~S_IMMUTABLE;
+ 	}
+ 
+ 	fat_save_attrs(inode, attr);
+-- 
+1.8.1.5
+

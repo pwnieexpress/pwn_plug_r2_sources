@@ -1,0 +1,37 @@
+From d28a97ca224292508122da0cb92a321cc8b5bb4f Mon Sep 17 00:00:00 2001
+From: Tyler Hicks <tyhicks@linux.vnet.ibm.com>
+Date: Wed, 9 Mar 2011 11:49:13 -0600
+Subject: [PATCH 609/984] eCryptfs: Unlock page in write_begin error path
+
+commit 50f198ae16ac66508d4b8d5a40967a8507ad19ee upstream.
+
+Unlock the page in error path of ecryptfs_write_begin(). This may
+happen, for example, if decryption fails while bring the page
+up-to-date.
+
+Signed-off-by: Tyler Hicks <tyhicks@linux.vnet.ibm.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ fs/ecryptfs/mmap.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/fs/ecryptfs/mmap.c b/fs/ecryptfs/mmap.c
+index b1d8275..b530d9c 100644
+--- a/fs/ecryptfs/mmap.c
++++ b/fs/ecryptfs/mmap.c
+@@ -368,6 +368,11 @@ static int ecryptfs_write_begin(struct file *file,
+ 	    && (pos != 0))
+ 		zero_user(page, 0, PAGE_CACHE_SIZE);
+ out:
++	if (unlikely(rc)) {
++		unlock_page(page);
++		page_cache_release(page);
++		*pagep = NULL;
++	}
+ 	return rc;
+ }
+ 
+-- 
+1.8.1.5
+

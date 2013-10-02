@@ -1,0 +1,35 @@
+From 6e59c823bf33fbbf211fa55198aafaf125fab95f Mon Sep 17 00:00:00 2001
+From: Felix Fietkau <nbd@openwrt.org>
+Date: Mon, 21 Mar 2011 20:01:00 +0100
+Subject: [PATCH 606/984] mac80211: initialize sta->last_rx in sta_info_alloc
+
+commit 8bc8aecdc5e26cfda12dbd6867af4aa67836da6a upstream.
+
+This field is used to determine the inactivity time. When in AP mode,
+hostapd uses it for kicking out inactive clients after a while. Without this
+patch, hostapd immediately deauthenticates a new client if it checks the
+inactivity time before the client sends its first data frame.
+
+Signed-off-by: Felix Fietkau <nbd@openwrt.org>
+Signed-off-by: John W. Linville <linville@tuxdriver.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/mac80211/sta_info.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/net/mac80211/sta_info.c b/net/mac80211/sta_info.c
+index ba9360a..cd6999e 100644
+--- a/net/mac80211/sta_info.c
++++ b/net/mac80211/sta_info.c
+@@ -239,6 +239,7 @@ struct sta_info *sta_info_alloc(struct ieee80211_sub_if_data *sdata,
+ 	memcpy(sta->sta.addr, addr, ETH_ALEN);
+ 	sta->local = local;
+ 	sta->sdata = sdata;
++	sta->last_rx = jiffies;
+ 
+ 	if (sta_prepare_rate_control(local, sta, gfp)) {
+ 		kfree(sta);
+-- 
+1.8.1.5
+

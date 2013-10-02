@@ -1,0 +1,38 @@
+From 62e2d392a18f2a3149e31fecbe18a32a06587174 Mon Sep 17 00:00:00 2001
+From: Jan Kiszka <jan.kiszka@siemens.com>
+Date: Tue, 2 Nov 2010 08:05:51 +0100
+Subject: [PATCH 735/984] intel-iommu: Fix use after release during device
+ attach
+
+upstream commit 7a6610139a
+
+Obtain the new pgd pointer before releasing the page containing this
+value.
+
+Cc: stable@kernel.org
+Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+Reviewed-by: Sheng Yang <sheng@linux.intel.com>
+Signed-off-by: David Woodhouse <David.Woodhouse@intel.com>
+---
+ drivers/pci/intel-iommu.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/pci/intel-iommu.c b/drivers/pci/intel-iommu.c
+index 83ac0a0..46fcc59 100644
+--- a/drivers/pci/intel-iommu.c
++++ b/drivers/pci/intel-iommu.c
+@@ -3638,9 +3638,9 @@ static int intel_iommu_attach_device(struct iommu_domain *domain,
+ 
+ 		pte = dmar_domain->pgd;
+ 		if (dma_pte_present(pte)) {
+-			free_pgtable_page(dmar_domain->pgd);
+ 			dmar_domain->pgd = (struct dma_pte *)
+ 				phys_to_virt(dma_pte_addr(pte));
++			free_pgtable_page(pte);
+ 		}
+ 		dmar_domain->agaw--;
+ 	}
+-- 
+1.8.1.5
+

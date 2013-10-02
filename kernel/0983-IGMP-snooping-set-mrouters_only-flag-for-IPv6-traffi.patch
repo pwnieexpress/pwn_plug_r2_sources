@@ -1,0 +1,48 @@
+From ef0c3e7d6e082b7f3cf41546525c84f4477a76d3 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Fernando=20Luis=20V=C3=A1zquez=20Cao?=
+ <fernando@oss.ntt.co.jp>
+Date: Mon, 13 Jun 2011 15:06:58 +0000
+Subject: [PATCH 983/984] IGMP snooping: set mrouters_only flag for IPv6
+ traffic
+
+[ upstream commit fc2af6c73fc9449cd5894a36bb76b8f8c0e49fd8 ]
+ properly
+
+Upon reception of a MGM report packet the kernel sets the mrouters_only flag
+in a skb that is a clone of the original skb, which means that the bridge
+loses track of MGM packets (cb buffers are tied to a specific skb and not
+shared) and it ends up forwading join requests to the bridge interface.
+
+This can cause unexpected membership timeouts and intermitent/permanent loss
+of connectivity as described in RFC 4541 [2.1.1. IGMP Forwarding Rules]:
+
+    A snooping switch should forward IGMP Membership Reports only to
+    those ports where multicast routers are attached.
+    [...]
+    Sending membership reports to other hosts can result, for IGMPv1
+    and IGMPv2, in unintentionally preventing a host from joining a
+    specific multicast group.
+
+Signed-off-by: Fernando Luis Vazquez Cao <fernando@oss.ntt.co.jp>
+Signed-off-by: David S. Miller <davem@conan.davemloft.net>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/bridge/br_multicast.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/bridge/br_multicast.c b/net/bridge/br_multicast.c
+index 7ab8ad3..382a428 100644
+--- a/net/bridge/br_multicast.c
++++ b/net/bridge/br_multicast.c
+@@ -1517,7 +1517,7 @@ static int br_multicast_ipv6_rcv(struct net_bridge *br,
+ 	case ICMPV6_MGM_REPORT:
+ 	    {
+ 		struct mld_msg *mld = (struct mld_msg *)icmp6h;
+-		BR_INPUT_SKB_CB(skb2)->mrouters_only = 1;
++		BR_INPUT_SKB_CB(skb)->mrouters_only = 1;
+ 		err = br_ip6_multicast_add_group(br, port, &mld->mld_mca);
+ 		break;
+ 	    }
+-- 
+1.8.1.5
+

@@ -1,0 +1,39 @@
+From 1a74f9cc24d9255e24e6001476ed5acb6448d49b Mon Sep 17 00:00:00 2001
+From: Axel Lin <axel.lin@gmail.com>
+Date: Wed, 24 Nov 2010 10:20:33 +0800
+Subject: [PATCH 104/984] ASoC: wm8961 - clear WM8961_DACSLOPE bit for normal
+ mode
+
+commit 08b1a38465cab8c2224a5202c7a3b5e5f5630894 upstream.
+
+DACSLOPE bit of Register 06h ADC and DAC Control 2:
+        0: Normal mode
+        1: Sloping stop-band mode
+
+Thus in the case of normal mode, we should clear DACSLOPE bit.
+
+Signed-off-by: Axel Lin <axel.lin@gmail.com>
+Acked-by: Liam Girdwood <lrg@slimlogic.co.uk>
+Signed-off-by: Mark Brown <broonie@opensource.wolfsonmicro.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ sound/soc/codecs/wm8961.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sound/soc/codecs/wm8961.c b/sound/soc/codecs/wm8961.c
+index 5b9a756..4cda28d 100644
+--- a/sound/soc/codecs/wm8961.c
++++ b/sound/soc/codecs/wm8961.c
+@@ -711,7 +711,7 @@ static int wm8961_hw_params(struct snd_pcm_substream *substream,
+ 	if (fs <= 24000)
+ 		reg |= WM8961_DACSLOPE;
+ 	else
+-		reg &= WM8961_DACSLOPE;
++		reg &= ~WM8961_DACSLOPE;
+ 	snd_soc_write(codec, WM8961_ADC_DAC_CONTROL_2, reg);
+ 
+ 	return 0;
+-- 
+1.8.1.5
+

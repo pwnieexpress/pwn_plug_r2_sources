@@ -1,0 +1,38 @@
+From 876c33c2acfc57b312f1743964f0c4469932fdf7 Mon Sep 17 00:00:00 2001
+From: Florian Fainelli <florian@openwrt.org>
+Date: Fri, 26 Nov 2010 10:39:54 +0100
+Subject: [PATCH 326/984] gpio: Fix null pointer dereference while accessing
+ rdc321x platform_data
+
+commit fa6469cb5b2d16703464c344b943e2c025cb7858 upstream.
+
+rdc321x-gpio currently fetches its driver specific data by using the
+platform_device->platform_data pointer, this is wrong because the mfd
+device which registers our platform_device has been added using
+mfd_add_device() which sets the platform_device->driver_data pointer
+instead.
+
+Signed-off-by: Florian Fainelli <florian@openwrt.org>
+Signed-off-by: Samuel Ortiz <sameo@linux.intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/gpio/rdc321x-gpio.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/gpio/rdc321x-gpio.c b/drivers/gpio/rdc321x-gpio.c
+index 2762698..897e057 100644
+--- a/drivers/gpio/rdc321x-gpio.c
++++ b/drivers/gpio/rdc321x-gpio.c
+@@ -135,7 +135,7 @@ static int __devinit rdc321x_gpio_probe(struct platform_device *pdev)
+ 	struct rdc321x_gpio *rdc321x_gpio_dev;
+ 	struct rdc321x_gpio_pdata *pdata;
+ 
+-	pdata = pdev->dev.platform_data;
++	pdata = platform_get_drvdata(pdev);
+ 	if (!pdata) {
+ 		dev_err(&pdev->dev, "no platform data supplied\n");
+ 		return -ENODEV;
+-- 
+1.8.1.5
+

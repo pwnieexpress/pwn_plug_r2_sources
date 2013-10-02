@@ -1,0 +1,54 @@
+From 971f304b0ecef95693e5c46fb534366d0fef94cc Mon Sep 17 00:00:00 2001
+From: Greg Kroah-Hartman <gregkh@suse.de>
+Date: Wed, 23 Mar 2011 15:50:39 -0700
+Subject: [PATCH 731/984] Revert "intel_idle: PCI quirk to prevent Lenovo
+ Ideapad s10-3 boot hang"
+
+This reverts commit 05f7676dc3559c2b9061fda4e44c085a8d32fb05.
+
+To quote Len Brown:
+	intel_idle was deemed a "feature", and thus not included in
+	2.6.33.stable, and thus 2.6.33.stable does not need this patch.
+so I'm removing it.
+
+Cc: Len Brown <len.brown@intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/pci/quirks.c | 20 --------------------
+ 1 file changed, 20 deletions(-)
+
+diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
+index 9cd7000..06b234f 100644
+--- a/drivers/pci/quirks.c
++++ b/drivers/pci/quirks.c
+@@ -150,26 +150,6 @@ DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_NEC,	PCI_DEVICE_ID_NEC_CBUS_2,	quirk_isa_d
+ DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_NEC,	PCI_DEVICE_ID_NEC_CBUS_3,	quirk_isa_dma_hangs);
+ 
+ /*
+- * Intel NM10 "TigerPoint" LPC PM1a_STS.BM_STS must be clear
+- * for some HT machines to use C4 w/o hanging.
+- */
+-static void __devinit quirk_tigerpoint_bm_sts(struct pci_dev *dev)
+-{
+-	u32 pmbase;
+-	u16 pm1a;
+-
+-	pci_read_config_dword(dev, 0x40, &pmbase);
+-	pmbase = pmbase & 0xff80;
+-	pm1a = inw(pmbase);
+-
+-	if (pm1a & 0x10) {
+-		dev_info(&dev->dev, FW_BUG "TigerPoint LPC.BM_STS cleared\n");
+-		outw(0x10, pmbase);
+-	}
+-}
+-DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_TGP_LPC, quirk_tigerpoint_bm_sts);
+-
+-/*
+  *	Chipsets where PCI->PCI transfers vanish or hang
+  */
+ static void __devinit quirk_nopcipci(struct pci_dev *dev)
+-- 
+1.8.1.5
+

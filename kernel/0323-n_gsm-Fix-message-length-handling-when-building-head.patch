@@ -1,0 +1,41 @@
+From 1298db626792287d5c66ba71ae802cfd1db72d3f Mon Sep 17 00:00:00 2001
+From: Ken Mills <ken.k.mills@intel.com>
+Date: Mon, 13 Dec 2010 15:27:27 +0000
+Subject: [PATCH 323/984] n_gsm: Fix message length handling when building
+ header
+
+commit be7a7411d63ccad165d66fe8e0b11b2ee336159b upstream.
+
+Fix message length handling when building header
+
+When the message length is greater than 127, the length field in the header
+is built incorrectly. According to the spec, when the length is less than 128
+the length field is a single byte formatted as: bbbbbbb1. When it is greater
+than 127 then the field is two bytes of the format: bbbbbbb0 bbbbbbbb.
+
+Signed-off-by: Ken Mills <ken.k.mills@intel.com>
+Signed-off-by: Alan Cox <alan@linux.intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/char/n_gsm.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/char/n_gsm.c b/drivers/char/n_gsm.c
+index e4089c4..3bf4792 100644
+--- a/drivers/char/n_gsm.c
++++ b/drivers/char/n_gsm.c
+@@ -717,8 +717,8 @@ static void __gsm_data_queue(struct gsm_dlci *dlci, struct gsm_msg *msg)
+ 		if (msg->len < 128)
+ 			*--dp = (msg->len << 1) | EA;
+ 		else {
+-			*--dp = (msg->len >> 6) | EA;
+-			*--dp = (msg->len & 127) << 1;
++			*--dp = (msg->len >> 7);	/* bits 7 - 15 */
++			*--dp = (msg->len & 127) << 1;	/* bits 0 - 6 */
+ 		}
+ 	}
+ 
+-- 
+1.8.1.5
+

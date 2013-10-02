@@ -1,0 +1,34 @@
+From bfac194346ce63ac8a7cec0842a4e65d22f9d708 Mon Sep 17 00:00:00 2001
+From: Dave Jones <davej@redhat.com>
+Date: Sun, 12 Jun 2011 16:35:28 -0400
+Subject: [PATCH 889/984] CPUFREQ: Remove cpufreq_stats sysfs entries on module
+ unload.
+
+commit 13f067537f34456443f61c950cd6dc37d1d5f3ee upstream.
+
+cpufreq_stats leaves behind its sysfs entries, which causes a panic
+when something stumbled across them.
+(Discovered by unloading cpufreq_stats while powertop was loaded).
+
+Signed-off-by: Dave Jones <davej@redhat.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/cpufreq/cpufreq_stats.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/cpufreq/cpufreq_stats.c b/drivers/cpufreq/cpufreq_stats.c
+index 4f1b8de..7c7a1e4 100644
+--- a/drivers/cpufreq/cpufreq_stats.c
++++ b/drivers/cpufreq/cpufreq_stats.c
+@@ -388,6 +388,7 @@ static void __exit cpufreq_stats_exit(void)
+ 	unregister_hotcpu_notifier(&cpufreq_stat_cpu_notifier);
+ 	for_each_online_cpu(cpu) {
+ 		cpufreq_stats_free_table(cpu);
++		cpufreq_stats_free_sysfs(cpu);
+ 	}
+ }
+ 
+-- 
+1.8.1.5
+

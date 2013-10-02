@@ -1,0 +1,37 @@
+From 27752f2920dcbaae3a13a3caac8db94d9a9e427a Mon Sep 17 00:00:00 2001
+From: Andi Kleen <andi@firstfloor.org>
+Date: Mon, 1 Aug 2011 13:54:41 -0700
+Subject: [PATCH 745/984] maintainer
+
+Add Andi Kleen as 2.6.35 longterm maintainer
+
+From: Andi Kleen <andi@firstfloor.org>
+
+People complained about me not being in the MAINTAINERS file.
+So fix that.
+
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ MAINTAINERS | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 696e7d2..d0cdb2f 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -3444,6 +3444,12 @@ F:	drivers/lguest/
+ F:	include/linux/lguest*.h
+ F:	arch/x86/include/asm/lguest*.h
+ 
++LINUX 2.6.35 LONGTERM:
++M:	Andi Kleen <andi@firstfloor.org>
++L:	stable@kernel.org
++S:	Maintained
++F:	*
++
+ LINUX FOR IBM pSERIES (RS/6000)
+ M:	Paul Mackerras <paulus@au.ibm.com>
+ W:	http://www.ibm.com/linux/ltc/projects/ppc
+-- 
+1.8.1.5
+

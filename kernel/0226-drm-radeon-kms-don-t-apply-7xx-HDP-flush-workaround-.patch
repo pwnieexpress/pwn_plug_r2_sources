@@ -1,0 +1,62 @@
+From 099433591bd86e532987a4e481fe351c4237386e Mon Sep 17 00:00:00 2001
+From: Alex Deucher <alexdeucher@gmail.com>
+Date: Wed, 8 Dec 2010 10:05:34 -0500
+Subject: [PATCH 226/984] drm/radeon/kms: don't apply 7xx HDP flush workaround
+ on AGP
+
+commit f3886f85cfde578f1d0ba6e40ac5f9d70043923b upstream.
+
+It should be required for all 7xx asics, but seems to cause
+problems on some AGP 7xx chips.
+
+Fixes:
+https://bugzilla.kernel.org/show_bug.cgi?id=19002
+
+Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+Reported-and-Tested-by: Duncan <1i5t5.duncan@cox.net>
+Signed-off-by: Dave Airlie <airlied@redhat.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+ drivers/gpu/drm/radeon/r600.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/radeon/r600.c b/drivers/gpu/drm/radeon/r600.c
+index a40be95..6356b1c5 100644
+--- a/drivers/gpu/drm/radeon/r600.c
++++ b/drivers/gpu/drm/radeon/r600.c
+@@ -869,12 +869,15 @@ void r600_pcie_gart_tlb_flush(struct radeon_device *rdev)
+ 	u32 tmp;
+ 
+ 	/* flush hdp cache so updates hit vram */
+-	if ((rdev->family >= CHIP_RV770) && (rdev->family <= CHIP_RV740)) {
++	if ((rdev->family >= CHIP_RV770) && (rdev->family <= CHIP_RV740) &&
++	    !(rdev->flags & RADEON_IS_AGP)) {
+ 		void __iomem *ptr = (void *)rdev->gart.table.vram.ptr;
+ 		u32 tmp;
+ 
+ 		/* r7xx hw bug.  write to HDP_DEBUG1 followed by fb read
+ 		 * rather than write to HDP_REG_COHERENCY_FLUSH_CNTL
++		 * This seems to cause problems on some AGP cards. Just use the old
++		 * method for them.
+ 		 */
+ 		WREG32(HDP_DEBUG1, 0);
+ 		tmp = readl((void __iomem *)ptr);
+@@ -3523,10 +3526,12 @@ int r600_debugfs_mc_info_init(struct radeon_device *rdev)
+ void r600_ioctl_wait_idle(struct radeon_device *rdev, struct radeon_bo *bo)
+ {
+ 	/* r7xx hw bug.  write to HDP_DEBUG1 followed by fb read
+-	 * rather than write to HDP_REG_COHERENCY_FLUSH_CNTL
++	 * rather than write to HDP_REG_COHERENCY_FLUSH_CNTL.
++	 * This seems to cause problems on some AGP cards. Just use the old
++	 * method for them.
+ 	 */
+ 	if ((rdev->family >= CHIP_RV770) && (rdev->family <= CHIP_RV740) &&
+-	    rdev->vram_scratch.ptr) {
++	    rdev->vram_scratch.ptr && !(rdev->flags & RADEON_IS_AGP)) {
+ 		void __iomem *ptr = (void *)rdev->vram_scratch.ptr;
+ 		u32 tmp;
+ 
+-- 
+1.8.1.5
+

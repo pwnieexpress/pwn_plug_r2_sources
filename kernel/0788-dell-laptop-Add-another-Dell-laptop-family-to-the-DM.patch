@@ -1,0 +1,44 @@
+From 445c6e0512acac0280f7c34ee756c51ed5b099cd Mon Sep 17 00:00:00 2001
+From: Rezwanul Kabir <Rezwanul_Kabir@dell.com>
+Date: Wed, 23 Jun 2010 12:02:43 -0500
+Subject: [PATCH 788/984] dell-laptop: Add another Dell laptop family to the
+ DMI whitelist
+
+commit 410d44c74cf9942e3055d5b7d73953fac8efbacb upstream.
+
+This is to support Precision M4500 and others.
+
+Signed-off-by: Rezwanul Kabir <Rezwanul_Kabir@dell.com>
+Signed-off-by: Matthew Garrett <mjg@redhat.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/platform/x86/dell-laptop.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drivers/platform/x86/dell-laptop.c b/drivers/platform/x86/dell-laptop.c
+index 6110601..0fb56e0 100644
+--- a/drivers/platform/x86/dell-laptop.c
++++ b/drivers/platform/x86/dell-laptop.c
+@@ -83,6 +83,12 @@ static const struct dmi_system_id __initdata dell_device_table[] = {
+ 		},
+ 	},
+ 	{
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc."),
++			DMI_MATCH(DMI_CHASSIS_TYPE, "9"), /*Laptop*/
++		},
++	},
++	{
+ 		.ident = "Dell Computer Corporation",
+ 		.matches = {
+ 			DMI_MATCH(DMI_SYS_VENDOR, "Dell Computer Corporation"),
+@@ -628,4 +634,5 @@ MODULE_AUTHOR("Matthew Garrett <mjg@redhat.com>");
+ MODULE_DESCRIPTION("Dell laptop driver");
+ MODULE_LICENSE("GPL");
+ MODULE_ALIAS("dmi:*svnDellInc.:*:ct8:*");
++MODULE_ALIAS("dmi:*svnDellInc.:*:ct9:*");
+ MODULE_ALIAS("dmi:*svnDellComputerCorporation.:*:ct8:*");
+-- 
+1.8.1.5
+

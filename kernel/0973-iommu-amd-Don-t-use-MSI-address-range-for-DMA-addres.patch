@@ -1,0 +1,64 @@
+From 08b751d515c0f2745b3e3c6bc7ca5a3f2747fe28 Mon Sep 17 00:00:00 2001
+From: Joerg Roedel <joerg.roedel@amd.com>
+Date: Wed, 6 Jul 2011 17:14:44 +0200
+Subject: [PATCH 973/984] iommu/amd: Don't use MSI address range for DMA
+ addresses
+
+[ upstream commit 17f5b569e09cfa3488eaa663cbf9feada2e789f5 ]
+
+Reserve the MSI address range in the address allocator so
+that MSI addresses are not handed out as dma handles.
+
+Cc: stable@kernel.org
+Signed-off-by: Joerg Roedel <joerg.roedel@amd.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ arch/x86/kernel/amd_iommu.c | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/kernel/amd_iommu.c b/arch/x86/kernel/amd_iommu.c
+index 4424c73..e26ac40 100644
+--- a/arch/x86/kernel/amd_iommu.c
++++ b/arch/x86/kernel/amd_iommu.c
+@@ -25,6 +25,7 @@
+ #include <linux/dma-mapping.h>
+ #include <linux/iommu-helper.h>
+ #include <linux/iommu.h>
++#include <asm/msidef.h>
+ #include <asm/proto.h>
+ #include <asm/iommu.h>
+ #include <asm/gart.h>
+@@ -1048,7 +1049,7 @@ static int alloc_new_range(struct dma_ops_domain *dma_dom,
+ {
+ 	int index = dma_dom->aperture_size >> APERTURE_RANGE_SHIFT;
+ 	struct amd_iommu *iommu;
+-	unsigned long i;
++	unsigned long i, old_size;
+ 
+ #ifdef CONFIG_IOMMU_STRESS
+ 	populate = false;
+@@ -1084,8 +1085,21 @@ static int alloc_new_range(struct dma_ops_domain *dma_dom,
+ 		}
+ 	}
+ 
++	old_size                = dma_dom->aperture_size;
+ 	dma_dom->aperture_size += APERTURE_RANGE_SIZE;
+ 
++	/* Reserve address range used for MSI messages */
++	if (old_size < MSI_ADDR_BASE_LO &&
++	    dma_dom->aperture_size > MSI_ADDR_BASE_LO) {
++		unsigned long spage;
++		int pages;
++
++		pages = iommu_num_pages(MSI_ADDR_BASE_LO, 0x10000, PAGE_SIZE);
++		spage = MSI_ADDR_BASE_LO >> PAGE_SHIFT;
++
++		dma_ops_reserve_addresses(dma_dom, spage, pages);
++	}
++
+ 	/* Intialize the exclusion range if necessary */
+ 	for_each_iommu(iommu) {
+ 		if (iommu->exclusion_start &&
+-- 
+1.8.1.5
+

@@ -1,0 +1,59 @@
+From 593c62f0ef892aaa5045805933d139125f9614ba Mon Sep 17 00:00:00 2001
+From: Ming Lei <tom.leiming@gmail.com>
+Date: Mon, 1 Nov 2010 07:11:54 -0700
+Subject: [PATCH 095/984] usbnet: fix usb_autopm_get_interface failure(v1)
+
+commit b0786b430c982dffbb44d8030e6b6088671ce745 upstream.
+
+Since usbnet already took usb runtime pm, we have to
+enable runtime pm for usb interface of usbnet, otherwise
+usb_autopm_get_interface may return failure and cause
+'ifconfig usb0 up' failed if USB_SUSPEND(RUNTIME_PM) is
+enabled.
+
+Cc: David Brownell <dbrownell@users.sourceforge.net>
+Cc: "David S. Miller" <davem@davemloft.net>
+Cc: Ben Hutchings <ben@decadent.org.uk>
+Cc: Joe Perches <joe@perches.com>
+Cc: Oliver Neukum <oliver@neukum.org>
+Cc: Andy Shevchenko <andy.shevchenko@gmail.com>
+Signed-off-by: Ming Lei <tom.leiming@gmail.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/net/usb/usbnet.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/drivers/net/usb/usbnet.c b/drivers/net/usb/usbnet.c
+index 81c76ad..2793cff 100644
+--- a/drivers/net/usb/usbnet.c
++++ b/drivers/net/usb/usbnet.c
+@@ -44,6 +44,7 @@
+ #include <linux/usb.h>
+ #include <linux/usb/usbnet.h>
+ #include <linux/slab.h>
++#include <linux/pm_runtime.h>
+ 
+ #define DRIVER_VERSION		"22-Aug-2005"
+ 
+@@ -1272,6 +1273,16 @@ usbnet_probe (struct usb_interface *udev, const struct usb_device_id *prod)
+ 	struct usb_device		*xdev;
+ 	int				status;
+ 	const char			*name;
++	struct usb_driver 	*driver = to_usb_driver(udev->dev.driver);
++
++	/* usbnet already took usb runtime pm, so have to enable the feature
++	 * for usb interface, otherwise usb_autopm_get_interface may return
++	 * failure if USB_SUSPEND(RUNTIME_PM) is enabled.
++	 */
++	if (!driver->supports_autosuspend) {
++		driver->supports_autosuspend = 1;
++		pm_runtime_enable(&udev->dev);
++	}
+ 
+ 	name = udev->dev.driver->name;
+ 	info = (struct driver_info *) prod->driver_info;
+-- 
+1.8.1.5
+

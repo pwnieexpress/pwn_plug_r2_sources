@@ -1,0 +1,35 @@
+From c7f88b2668a1fe87d6b0497081c03653c44ee80f Mon Sep 17 00:00:00 2001
+From: Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
+Date: Wed, 6 Jul 2011 17:58:56 -0700
+Subject: [PATCH 969/984] ASoC: ak4642: fixup snd_soc_update_bits mask for
+ PW_MGMT2
+
+[ upstream commit bd7fdbcaa2d06d446577fd3c9b81847b04469e01 ]
+
+mask didn't cover update-data
+
+Signed-off-by: Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
+Acked-by: Liam Girdwood <lrg@ti.com>
+Signed-off-by: Mark Brown <broonie@opensource.wolfsonmicro.com>
+Cc: stable@kernel.org
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ sound/soc/codecs/ak4642.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sound/soc/codecs/ak4642.c b/sound/soc/codecs/ak4642.c
+index 7528a54..dc21971 100644
+--- a/sound/soc/codecs/ak4642.c
++++ b/sound/soc/codecs/ak4642.c
+@@ -319,7 +319,7 @@ static int ak4642_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
+ 	default:
+ 		return -EINVAL;
+ 	}
+-	snd_soc_update_bits(codec, PW_MGMT2, MS, data);
++	snd_soc_update_bits(codec, PW_MGMT2, MS | MCKO | PMPLL, data);
+ 	snd_soc_update_bits(codec, MD_CTL1, BCKO_MASK, bcko);
+ 
+ 	return 0;
+-- 
+1.8.1.5
+

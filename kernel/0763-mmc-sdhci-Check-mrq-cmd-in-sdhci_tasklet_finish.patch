@@ -1,0 +1,42 @@
+From 5c8e95fea6c5c922ecdfde9d41f460dcc2e797e4 Mon Sep 17 00:00:00 2001
+From: Ben Dooks <ben-linux@fluff.org>
+Date: Wed, 27 Apr 2011 14:24:19 +0100
+Subject: [PATCH 763/984] mmc: sdhci: Check mrq->cmd in sdhci_tasklet_finish
+
+commit b7b4d3426d2b5ecab21578eb20d8e456a1aace8f upstream.
+
+It seems that under certain circumstances that the sdhci_tasklet_finish()
+call can be entered with mrq->cmd set to NULL, causing the system to crash
+with a NULL pointer de-reference.
+
+Unable to handle kernel NULL pointer dereference at virtual address 00000000
+PC is at sdhci_tasklet_finish+0x34/0xe8
+LR is at sdhci_tasklet_finish+0x24/0xe8
+
+Seen on S3C6410 system.
+
+Signed-off-by: Ben Dooks <ben-linux@fluff.org>
+Signed-off-by: Mark Brown <broonie@opensource.wolfsonmicro.com>
+Signed-off-by: Chris Ball <cjb@laptop.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/mmc/host/sdhci.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/mmc/host/sdhci.c b/drivers/mmc/host/sdhci.c
+index c6d1bd8..0f5a5a2 100644
+--- a/drivers/mmc/host/sdhci.c
++++ b/drivers/mmc/host/sdhci.c
+@@ -1289,7 +1289,7 @@ static void sdhci_tasklet_finish(unsigned long param)
+ 	 * upon error conditions.
+ 	 */
+ 	if (!(host->flags & SDHCI_DEVICE_DEAD) &&
+-		(mrq->cmd->error ||
++	    ((mrq->cmd && mrq->cmd->error) ||
+ 		 (mrq->data && (mrq->data->error ||
+ 		  (mrq->data->stop && mrq->data->stop->error))) ||
+ 		   (host->quirks & SDHCI_QUIRK_RESET_AFTER_REQUEST))) {
+-- 
+1.8.1.5
+

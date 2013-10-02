@@ -1,0 +1,78 @@
+From afa01a2cc021a5f03f02364bb867af3114395304 Mon Sep 17 00:00:00 2001
+From: "Eric W. Biederman" <ebiederm@xmission.com>
+Date: Sun, 13 Jun 2010 03:28:59 +0000
+Subject: [PATCH 276/984] sock: Introduce cred_to_ucred
+
+Upstream commit 3f551f9436c05a3b5eccdd6e94733df5bb98d2a5
+
+To keep the coming code clear and to allow both the sock
+code and the scm code to share the logic introduce a
+fuction to translate from struct cred to struct ucred.
+
+Signed-off-by: Eric W. Biederman <ebiederm@xmission.com>
+Acked-by: Pavel Emelyanov <xemul@openvz.org>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ include/linux/socket.h |  5 +++++
+ net/core/sock.c        | 14 ++++++++++++++
+ 2 files changed, 19 insertions(+)
+
+diff --git a/include/linux/socket.h b/include/linux/socket.h
+index 032a19e..a2fada9 100644
+--- a/include/linux/socket.h
++++ b/include/linux/socket.h
+@@ -24,6 +24,9 @@ struct __kernel_sockaddr_storage {
+ #include <linux/types.h>		/* pid_t			*/
+ #include <linux/compiler.h>		/* __user			*/
+ 
++struct pid;
++struct cred;
++
+ #define __sockaddr_check_size(size)	\
+ 	BUILD_BUG_ON(((size) > sizeof(struct __kernel_sockaddr_storage)))
+ 
+@@ -309,6 +312,8 @@ struct ucred {
+ #define IPX_TYPE	1
+ 
+ #ifdef __KERNEL__
++extern void cred_to_ucred(struct pid *pid, const struct cred *cred, struct ucred *ucred);
++
+ extern int memcpy_fromiovec(unsigned char *kdata, struct iovec *iov, int len);
+ extern int memcpy_fromiovecend(unsigned char *kdata, const struct iovec *iov,
+ 			       int offset, int len);
+diff --git a/net/core/sock.c b/net/core/sock.c
+index 2cf7f9f..50197eb 100644
+--- a/net/core/sock.c
++++ b/net/core/sock.c
+@@ -110,6 +110,7 @@
+ #include <linux/tcp.h>
+ #include <linux/init.h>
+ #include <linux/highmem.h>
++#include <linux/user_namespace.h>
+ 
+ #include <asm/uaccess.h>
+ #include <asm/system.h>
+@@ -749,6 +750,19 @@ set_rcvbuf:
+ EXPORT_SYMBOL(sock_setsockopt);
+ 
+ 
++void cred_to_ucred(struct pid *pid, const struct cred *cred,
++		   struct ucred *ucred)
++{
++	ucred->pid = pid_vnr(pid);
++	ucred->uid = ucred->gid = -1;
++	if (cred) {
++		struct user_namespace *current_ns = current_user_ns();
++
++		ucred->uid = user_ns_map_uid(current_ns, cred, cred->euid);
++		ucred->gid = user_ns_map_gid(current_ns, cred, cred->egid);
++	}
++}
++
+ int sock_getsockopt(struct socket *sock, int level, int optname,
+ 		    char __user *optval, int __user *optlen)
+ {
+-- 
+1.8.1.5
+

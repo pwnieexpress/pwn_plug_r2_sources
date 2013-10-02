@@ -1,0 +1,48 @@
+From 80cb488d71fe19df2f0883ab13bc7d1bd9d48b00 Mon Sep 17 00:00:00 2001
+From: Mike Hernandez <michael.hernandez@qlogic.com>
+Date: Tue, 23 Nov 2010 16:52:46 -0800
+Subject: [PATCH 249/984] qla2xxx: Populate Command Type 6 LUN field properly.
+
+commit 85727e1f78bd8392a0657ad6a4ff85fef1cc4a6d upstream.
+
+Use the host_to_fcp_swap call to correctly populate the LUN field
+in the Command Type 6 path.  This field is used during LUN reset
+cleanup and must match the field used in the FCP command.
+
+Signed-off-by: Mike Hernandez <michael.hernandez@qlogic.com>
+Signed-off-by: Madhuranath Iyengar <Madhu.Iyengar@qlogic.com>
+Signed-off-by: James Bottomley <James.Bottomley@suse.de>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/scsi/qla2xxx/qla_iocb.c | 1 +
+ drivers/scsi/qla2xxx/qla_nx.c   | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/drivers/scsi/qla2xxx/qla_iocb.c b/drivers/scsi/qla2xxx/qla_iocb.c
+index 8ef9453..1fcb89e 100644
+--- a/drivers/scsi/qla2xxx/qla_iocb.c
++++ b/drivers/scsi/qla2xxx/qla_iocb.c
+@@ -1122,6 +1122,7 @@ qla24xx_build_scsi_crc_2_iocbs(srb_t *sp, struct cmd_type_crc_2 *cmd_pkt,
+ 		fcp_cmnd->additional_cdb_len |= 2;
+ 
+ 	int_to_scsilun(sp->cmd->device->lun, &fcp_cmnd->lun);
++	host_to_fcp_swap((uint8_t *)&fcp_cmnd->lun, sizeof(fcp_cmnd->lun));
+ 	memcpy(fcp_cmnd->cdb, cmd->cmnd, cmd->cmd_len);
+ 	cmd_pkt->fcp_cmnd_dseg_len = cpu_to_le16(fcp_cmnd_len);
+ 	cmd_pkt->fcp_cmnd_dseg_address[0] = cpu_to_le32(
+diff --git a/drivers/scsi/qla2xxx/qla_nx.c b/drivers/scsi/qla2xxx/qla_nx.c
+index ff562de..e9d9333 100644
+--- a/drivers/scsi/qla2xxx/qla_nx.c
++++ b/drivers/scsi/qla2xxx/qla_nx.c
+@@ -2798,6 +2798,7 @@ sufficient_dsds:
+ 			goto queuing_error_fcp_cmnd;
+ 
+ 		int_to_scsilun(sp->cmd->device->lun, &cmd_pkt->lun);
++		host_to_fcp_swap((uint8_t *)&cmd_pkt->lun, sizeof(cmd_pkt->lun));
+ 
+ 		/* build FCP_CMND IU */
+ 		memset(ctx->fcp_cmnd, 0, sizeof(struct fcp_cmnd));
+-- 
+1.8.1.5
+

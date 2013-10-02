@@ -1,0 +1,35 @@
+From 419765ea4d221ddb9f41558eb5948c7c838f34ba Mon Sep 17 00:00:00 2001
+From: David Stevens <dlstevens@us.ibm.com>
+Date: Tue, 14 Dec 2010 08:42:16 +0000
+Subject: [PATCH 282/984] bridge: fix IPv6 queries for bridge multicast
+ snooping
+
+[ Upstream commit 76d661586c8131453ba75a2e027c1f21511a893a]
+
+This patch fixes a missing ntohs() for bridge IPv6 multicast snooping.
+
+Signed-off-by: David L Stevens <dlstevens@us.ibm.com>
+Acked-by: Herbert Xu <herbert@gondor.apana.org.au>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/bridge/br_multicast.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/bridge/br_multicast.c b/net/bridge/br_multicast.c
+index 27ae946..5a9bcfe 100644
+--- a/net/bridge/br_multicast.c
++++ b/net/bridge/br_multicast.c
+@@ -437,7 +437,7 @@ static struct sk_buff *br_ip6_multicast_alloc_query(struct net_bridge *br,
+ 	ip6h = ipv6_hdr(skb);
+ 
+ 	*(__force __be32 *)ip6h = htonl(0x60000000);
+-	ip6h->payload_len = 8 + sizeof(*mldq);
++	ip6h->payload_len = htons(8 + sizeof(*mldq));
+ 	ip6h->nexthdr = IPPROTO_HOPOPTS;
+ 	ip6h->hop_limit = 1;
+ 	ipv6_addr_set(&ip6h->saddr, 0, 0, 0, 0);
+-- 
+1.8.1.5
+

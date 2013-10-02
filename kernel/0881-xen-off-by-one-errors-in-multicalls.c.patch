@@ -1,0 +1,75 @@
+From ab0cc25a4b0367227df10f18c98db96af2db1dc0 Mon Sep 17 00:00:00 2001
+From: Dan Carpenter <error27@gmail.com>
+Date: Fri, 3 Jun 2011 07:45:28 +0300
+Subject: [PATCH 881/984] xen: off by one errors in multicalls.c
+
+commit f124c6ae59e193705c9ddac57684d50006d710e6 upstream.
+
+b->args[] has MC_ARGS elements, so the comparison here should be
+">=" instead of ">".  Otherwise we read past the end of the array
+one space.
+
+Signed-off-by: Dan Carpenter <error27@gmail.com>
+Signed-off-by: Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>
+Signed-off-by: Jeremy Fitzhardinge <jeremy.fitzhardinge@citrix.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ arch/x86/xen/multicalls.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/arch/x86/xen/multicalls.c b/arch/x86/xen/multicalls.c
+index 8bff7e7..1b2b73f 100644
+--- a/arch/x86/xen/multicalls.c
++++ b/arch/x86/xen/multicalls.c
+@@ -189,10 +189,10 @@ struct multicall_space __xen_mc_entry(size_t args)
+ 	unsigned argidx = roundup(b->argidx, sizeof(u64));
+ 
+ 	BUG_ON(preemptible());
+-	BUG_ON(b->argidx > MC_ARGS);
++	BUG_ON(b->argidx >= MC_ARGS);
+ 
+ 	if (b->mcidx == MC_BATCH ||
+-	    (argidx + args) > MC_ARGS) {
++	    (argidx + args) >= MC_ARGS) {
+ 		mc_stats_flush(b->mcidx == MC_BATCH ? FL_SLOTS : FL_ARGS);
+ 		xen_mc_flush();
+ 		argidx = roundup(b->argidx, sizeof(u64));
+@@ -206,7 +206,7 @@ struct multicall_space __xen_mc_entry(size_t args)
+ 	ret.args = &b->args[argidx];
+ 	b->argidx = argidx + args;
+ 
+-	BUG_ON(b->argidx > MC_ARGS);
++	BUG_ON(b->argidx >= MC_ARGS);
+ 	return ret;
+ }
+ 
+@@ -216,7 +216,7 @@ struct multicall_space xen_mc_extend_args(unsigned long op, size_t size)
+ 	struct multicall_space ret = { NULL, NULL };
+ 
+ 	BUG_ON(preemptible());
+-	BUG_ON(b->argidx > MC_ARGS);
++	BUG_ON(b->argidx >= MC_ARGS);
+ 
+ 	if (b->mcidx == 0)
+ 		return ret;
+@@ -224,14 +224,14 @@ struct multicall_space xen_mc_extend_args(unsigned long op, size_t size)
+ 	if (b->entries[b->mcidx - 1].op != op)
+ 		return ret;
+ 
+-	if ((b->argidx + size) > MC_ARGS)
++	if ((b->argidx + size) >= MC_ARGS)
+ 		return ret;
+ 
+ 	ret.mc = &b->entries[b->mcidx - 1];
+ 	ret.args = &b->args[b->argidx];
+ 	b->argidx += size;
+ 
+-	BUG_ON(b->argidx > MC_ARGS);
++	BUG_ON(b->argidx >= MC_ARGS);
+ 	return ret;
+ }
+ 
+-- 
+1.8.1.5
+

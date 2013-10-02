@@ -1,0 +1,40 @@
+From a8e8a6d0bca8893c544500e49cf824fded926a17 Mon Sep 17 00:00:00 2001
+From: Marcelo Roberto Jimenez <mroberto@cpti.cetuc.puc-rio.br>
+Date: Mon, 18 Oct 2010 22:38:08 +0100
+Subject: [PATCH 190/984] ARM: 6456/1: Fix for building DEBUG with
+ sa11xx_base.c as a module.
+
+commit b9f515e3e3861abbaa093359f7c6f31283695228 upstream.
+
+This patch fixes a compilation issue when compiling PCMCIA SA1100
+support as a module with PCMCIA_DEBUG enabled. The symbol
+soc_pcmcia_debug was not beeing exported.
+ARM: pcmcia: Fix for building DEBUG with sa11xx_base.c as a module.
+
+This patch fixes a compilation issue when compiling PCMCIA SA1100
+support as a module with PCMCIA_DEBUG enabled. The symbol
+soc_pcmcia_debug was not beeing exported.
+
+Signed-off-by: Marcelo Roberto Jimenez <mroberto@cpti.cetuc.puc-rio.br>
+Signed-off-by: Russell King <rmk+kernel@arm.linux.org.uk>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/pcmcia/soc_common.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/pcmcia/soc_common.c b/drivers/pcmcia/soc_common.c
+index 6f1a86b..fd4c25a 100644
+--- a/drivers/pcmcia/soc_common.c
++++ b/drivers/pcmcia/soc_common.c
+@@ -65,6 +65,7 @@ void soc_pcmcia_debug(struct soc_pcmcia_socket *skt, const char *func,
+ 		va_end(args);
+ 	}
+ }
++EXPORT_SYMBOL(soc_pcmcia_debug);
+ 
+ #endif
+ 
+-- 
+1.8.1.5
+

@@ -1,0 +1,40 @@
+From e0908c530987e7df4cfb4ef7d94cd2c0e17f6b95 Mon Sep 17 00:00:00 2001
+From: Andy Gospodarek <andy@greyhouse.net>
+Date: Wed, 2 Feb 2011 14:53:25 -0800
+Subject: [PATCH 674/984] gro: reset skb_iif on reuse
+
+commit 6d152e23ad1a7a5b40fef1f42e017d66e6115159 upstream.
+
+Like Herbert's change from a few days ago:
+
+66c46d741e2e60f0e8b625b80edb0ab820c46d7a gro: Reset dev pointer on reuse
+
+this may not be necessary at this point, but we should still clean up
+the skb->skb_iif.  If not we may end up with an invalid valid for
+skb->skb_iif when the skb is reused and the check is done in
+__netif_receive_skb.
+
+Signed-off-by: Andy Gospodarek <andy@greyhouse.net>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Brandon Philips <bphilips@suse.de>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/core/dev.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/net/core/dev.c b/net/core/dev.c
+index bd6c169..85e3f8d 100644
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -3232,6 +3232,7 @@ void napi_reuse_skb(struct napi_struct *napi, struct sk_buff *skb)
+ 	__skb_pull(skb, skb_headlen(skb));
+ 	skb_reserve(skb, NET_IP_ALIGN - skb_headroom(skb));
+ 	skb->dev = napi->dev;
++	skb->skb_iif = 0;
+ 
+ 	napi->skb = skb;
+ }
+-- 
+1.8.1.5
+

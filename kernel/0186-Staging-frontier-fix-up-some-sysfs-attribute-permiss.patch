@@ -1,0 +1,35 @@
+From b9ecedaf9df73f65d9b542ae9e394616dfd25d5d Mon Sep 17 00:00:00 2001
+From: Greg Kroah-Hartman <gregkh@suse.de>
+Date: Tue, 16 Nov 2010 11:18:33 -0800
+Subject: [PATCH 186/984] Staging: frontier: fix up some sysfs attribute
+ permissions
+
+commit 3bad28ec006ad6ab2bca4e5103860b75391e3c9d and
+2a767fda5d0d8dcff465724dfad6ee131489b3f2 upstream merged together.
+
+They should not be writable by any user
+
+Reported-by: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: David Taht <d@teklibre.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/staging/frontier/tranzport.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/staging/frontier/tranzport.c b/drivers/staging/frontier/tranzport.c
+index eed74f0..f21a0e8 100644
+--- a/drivers/staging/frontier/tranzport.c
++++ b/drivers/staging/frontier/tranzport.c
+@@ -204,7 +204,7 @@ static void usb_tranzport_abort_transfers(struct usb_tranzport *dev)
+     t->value = temp;							\
+     return count;							\
+   }									\
+-  static DEVICE_ATTR(value, S_IWUGO | S_IRUGO, show_##value, set_##value);
++  static DEVICE_ATTR(value, S_IWUSR | S_IRUGO, show_##value, set_##value);
+ 
+ show_int(enable);
+ show_int(offline);
+-- 
+1.8.1.5
+

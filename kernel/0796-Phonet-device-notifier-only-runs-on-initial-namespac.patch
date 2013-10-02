@@ -1,0 +1,43 @@
+From d58f50ab3cb89696982deeae32ef9e0eab96f787 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?R=C3=A9mi=20Denis-Courmont?= <remi.denis-courmont@nokia.com>
+Date: Mon, 25 Oct 2010 10:43:32 +0300
+Subject: [PATCH 796/984] Phonet: device notifier only runs on initial
+ namespace
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+[bwh: This is only applicable to 2.6.32. Phonet was fixed upstream to
+work with multiple net namespaces.]
+
+This should really fix the OOPS when doing:
+
+  unshare(CLONE_NEWNET);
+  exit(0);
+
+while the phonet module is loaded.
+
+Signed-off-by: Rémi Denis-Courmont <remi.denis-courmont@nokia.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/phonet/pn_dev.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/net/phonet/pn_dev.c b/net/phonet/pn_dev.c
+index c33da65..29ae2bd 100644
+--- a/net/phonet/pn_dev.c
++++ b/net/phonet/pn_dev.c
+@@ -298,6 +298,9 @@ static int phonet_device_notify(struct notifier_block *me, unsigned long what,
+ {
+ 	struct net_device *dev = arg;
+ 
++	if (!net_eq(dev_net(dev), &init_net))
++		return 0;
++
+ 	switch (what) {
+ 	case NETDEV_REGISTER:
+ 		if (dev->type == ARPHRD_PHONET)
+-- 
+1.8.1.5
+

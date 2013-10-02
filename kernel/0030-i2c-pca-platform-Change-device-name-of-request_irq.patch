@@ -1,0 +1,35 @@
+From 93782b496da0239a3decc2d9860a6147598d703e Mon Sep 17 00:00:00 2001
+From: Nobuhiro Iwamatsu <nobuhiro.iwamatsu.yj@renesas.com>
+Date: Sun, 24 Oct 2010 18:16:57 +0200
+Subject: [PATCH 030/984] i2c-pca-platform: Change device name of request_irq
+
+commit 323584436db0cb05286425d4dfd9516fce88487f upstream.
+
+i2c->adap.name shouldn't be used in request_irq.
+Instead the driver name "i2c-pca-platform" should be used.
+
+Signed-off-by: Nobuhiro Iwamatsu <nobuhiro.iwamatsu.yj@renesas.com>
+Acked-by: Wolfram Sang <w.sang@pengutronix.de>
+Signed-off-by: Jean Delvare <khali@linux-fr.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/i2c/busses/i2c-pca-platform.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/i2c/busses/i2c-pca-platform.c b/drivers/i2c/busses/i2c-pca-platform.c
+index 5f6d7f8..ace6799 100644
+--- a/drivers/i2c/busses/i2c-pca-platform.c
++++ b/drivers/i2c/busses/i2c-pca-platform.c
+@@ -224,7 +224,7 @@ static int __devinit i2c_pca_pf_probe(struct platform_device *pdev)
+ 
+ 	if (irq) {
+ 		ret = request_irq(irq, i2c_pca_pf_handler,
+-			IRQF_TRIGGER_FALLING, i2c->adap.name, i2c);
++			IRQF_TRIGGER_FALLING, pdev->name, i2c);
+ 		if (ret)
+ 			goto e_reqirq;
+ 	}
+-- 
+1.8.1.5
+

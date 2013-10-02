@@ -1,0 +1,24 @@
+Make all frames sent to reserved group MAC addresses (01:80:c2:00:00:00 to
+01:80:c2:00:00:0f) be forwarded if STP is disabled. This enables
+forwarding EAPOL frames, among other things.
+
+Signed-off-by: Benjamin Poirier <benjamin.poirier at polymtl.ca>
+---
+ net/bridge/br_input.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/net/bridge/br_input.c b/net/bridge/br_input.c
+index 826cd52..436488c 100644
+--- a/net/bridge/br_input.c
++++ b/net/bridge/br_input.c
+@@ -159,7 +159,7 @@ struct sk_buff *br_handle_frame(struct sk_buff *skb)
+ 			goto drop;
+ 
+ 		/* If STP is turned off, then forward */
+-		if (p->br->stp_enabled == BR_NO_STP && dest[5] == 0)
++		if (p->br->stp_enabled == BR_NO_STP)
+ 			goto forward;
+ 
+ 		if (NF_HOOK(NFPROTO_BRIDGE, NF_BR_LOCAL_IN, skb, skb->dev,
+-- 
+1.7.1

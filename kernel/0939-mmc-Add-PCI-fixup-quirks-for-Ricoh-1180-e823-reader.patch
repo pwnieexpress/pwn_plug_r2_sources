@@ -1,0 +1,44 @@
+From afd392409785398ec6b3b2e3ac7c8510aff02ae3 Mon Sep 17 00:00:00 2001
+From: Manoj Iyer <manoj.iyer@canonical.com>
+Date: Thu, 26 May 2011 11:19:05 -0500
+Subject: [PATCH 939/984] mmc: Add PCI fixup quirks for Ricoh 1180:e823 reader
+
+[ upstream commit be98ca652faa6468916a9b7608befff215a8ca70 ]
+
+Signed-off-by: Manoj Iyer <manoj.iyer@canonical.com>
+Cc: <stable@kernel.org>
+Signed-off-by: Chris Ball <cjb@laptop.org>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/pci/quirks.c    | 2 ++
+ include/linux/pci_ids.h | 1 +
+ 2 files changed, 3 insertions(+)
+
+diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
+index dc42ab6..19a81cf 100644
+--- a/drivers/pci/quirks.c
++++ b/drivers/pci/quirks.c
+@@ -2701,6 +2701,8 @@ static void ricoh_mmc_fixup_r5c832(struct pci_dev *dev)
+ }
+ DECLARE_PCI_FIXUP_EARLY(PCI_VENDOR_ID_RICOH, PCI_DEVICE_ID_RICOH_R5C832, ricoh_mmc_fixup_r5c832);
+ DECLARE_PCI_FIXUP_RESUME_EARLY(PCI_VENDOR_ID_RICOH, PCI_DEVICE_ID_RICOH_R5C832, ricoh_mmc_fixup_r5c832);
++DECLARE_PCI_FIXUP_EARLY(PCI_VENDOR_ID_RICOH, PCI_DEVICE_ID_RICOH_R5CE823, ricoh_mmc_fixup_r5c832);
++DECLARE_PCI_FIXUP_RESUME_EARLY(PCI_VENDOR_ID_RICOH, PCI_DEVICE_ID_RICOH_R5CE823, ricoh_mmc_fixup_r5c832);
+ #endif /*CONFIG_MMC_RICOH_MMC*/
+ 
+ #if defined(CONFIG_DMAR) || defined(CONFIG_INTR_REMAP)
+diff --git a/include/linux/pci_ids.h b/include/linux/pci_ids.h
+index f1cbd85..7202ee1 100644
+--- a/include/linux/pci_ids.h
++++ b/include/linux/pci_ids.h
+@@ -1524,6 +1524,7 @@
+ #define PCI_DEVICE_ID_RICOH_RL5C476	0x0476
+ #define PCI_DEVICE_ID_RICOH_RL5C478	0x0478
+ #define PCI_DEVICE_ID_RICOH_R5C822	0x0822
++#define PCI_DEVICE_ID_RICOH_R5CE823	0xe823
+ #define PCI_DEVICE_ID_RICOH_R5C832	0x0832
+ #define PCI_DEVICE_ID_RICOH_R5C843	0x0843
+ 
+-- 
+1.8.1.5
+

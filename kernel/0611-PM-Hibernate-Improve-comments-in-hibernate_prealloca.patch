@@ -1,0 +1,41 @@
+From 3bb2757ba74f0898c7d80d00407887e377a3f238 Mon Sep 17 00:00:00 2001
+From: "Rafael J. Wysocki" <rjw@sisk.pl>
+Date: Mon, 20 Sep 2010 19:44:38 +0200
+Subject: [PATCH 611/984] PM / Hibernate: Improve comments in
+ hibernate_preallocate_memory()
+
+[ upstream commit 266f1a25eff5ff98c498d7754a419aacfd88f71c ]
+
+One comment in hibernate_preallocate_memory() is wrong, so fix it and
+add one more comment to clarify the meaning of the fixed one.
+
+Signed-off-by: Rafael J. Wysocki <rjw@sisk.pl>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ kernel/power/snapshot.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/kernel/power/snapshot.c b/kernel/power/snapshot.c
+index 1a9b326..f2f61fa 100644
+--- a/kernel/power/snapshot.c
++++ b/kernel/power/snapshot.c
+@@ -1318,12 +1318,14 @@ int hibernate_preallocate_memory(void)
+ 
+ 	/* Compute the maximum number of saveable pages to leave in memory. */
+ 	max_size = (count - (size + PAGES_FOR_IO)) / 2 - 2 * SPARE_PAGES;
++	/* Compute the desired number of image pages specified by image_size. */
+ 	size = DIV_ROUND_UP(image_size, PAGE_SIZE);
+ 	if (size > max_size)
+ 		size = max_size;
+ 	/*
+-	 * If the maximum is not less than the current number of saveable pages
+-	 * in memory, allocate page frames for the image and we're done.
++	 * If the desired number of image pages is at least as large as the
++	 * current number of saveable pages in memory, allocate page frames for
++	 * the image and we're done.
+ 	 */
+ 	if (size >= saveable) {
+ 		pages = preallocate_image_highmem(save_highmem);
+-- 
+1.8.1.5
+

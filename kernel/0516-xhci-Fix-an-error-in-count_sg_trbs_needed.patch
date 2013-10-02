@@ -1,0 +1,46 @@
+From 0fa2aea484fd2fd9a713c77445a1bc49eafd3ad7 Mon Sep 17 00:00:00 2001
+From: Paul Zimmerman <Paul.Zimmerman@synopsys.com>
+Date: Sat, 12 Feb 2011 14:07:57 -0800
+Subject: [PATCH 516/984] xhci: Fix an error in count_sg_trbs_needed()
+
+commit bcd2fde05341cef0052e49566ec88b406a521cf3 upstream.
+
+The expression
+
+	while (running_total < sg_dma_len(sg))
+
+does not take into account that the remaining data length can be less
+than sg_dma_len(sg). In that case, running_total can end up being
+greater than the total data length, so an extra TRB is counted.
+Changing the expression to
+
+	while (running_total < sg_dma_len(sg) && running_total < temp)
+
+fixes that.
+
+This patch should be queued for stable kernels back to 2.6.31.
+
+Signed-off-by: Paul Zimmerman <paulz@synopsys.com>
+Signed-off-by: Sarah Sharp <sarah.a.sharp@linux.intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/usb/host/xhci-ring.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/usb/host/xhci-ring.c b/drivers/usb/host/xhci-ring.c
+index 1801c56..4723a400 100644
+--- a/drivers/usb/host/xhci-ring.c
++++ b/drivers/usb/host/xhci-ring.c
+@@ -1896,7 +1896,7 @@ static unsigned int count_sg_trbs_needed(struct xhci_hcd *xhci, struct urb *urb)
+ 			num_trbs++;
+ 
+ 		/* How many more 64KB chunks to transfer, how many more TRBs? */
+-		while (running_total < sg_dma_len(sg)) {
++		while (running_total < sg_dma_len(sg) && running_total < temp) {
+ 			num_trbs++;
+ 			running_total += TRB_MAX_BUFF_SIZE;
+ 		}
+-- 
+1.8.1.5
+

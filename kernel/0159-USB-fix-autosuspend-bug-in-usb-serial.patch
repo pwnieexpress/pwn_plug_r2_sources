@@ -1,0 +1,48 @@
+From c42fe729ad67abe81b2e79d48134db10c6a0466d Mon Sep 17 00:00:00 2001
+From: Alan Stern <stern@rowland.harvard.edu>
+Date: Mon, 29 Nov 2010 10:17:22 -0500
+Subject: [PATCH 159/984] USB: fix autosuspend bug in usb-serial
+
+commit abf03184a31a3286fc0ab30f838ddee8ba9f9b7b upstream.
+
+This patch (as1437) fixes a bug in the usb-serial autosuspend
+handling.  Since the usb-serial core now has autosuspend support, it
+must set the .supports_autosuspend member in every serial driver it
+registers.  Otherwise the usb_autopm_get_interface() call won't work.
+
+This fixes Bugzilla #23012.
+
+Signed-off-by: Alan Stern <stern@rowland.harvard.edu>
+Reported-by: Kevin Smith <thirdwiggin@gmail.com>
+Reported-and-tested-by: Simon Gerber <gesimu@gmail.com>
+Reported-and-tested-by: Matteo Croce <matteo@openwrt.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/usb/serial/usb-serial.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/usb/serial/usb-serial.c b/drivers/usb/serial/usb-serial.c
+index 941c2d4..8fadc13 100644
+--- a/drivers/usb/serial/usb-serial.c
++++ b/drivers/usb/serial/usb-serial.c
+@@ -52,6 +52,7 @@ static struct usb_driver usb_serial_driver = {
+ 	.suspend =	usb_serial_suspend,
+ 	.resume =	usb_serial_resume,
+ 	.no_dynamic_id = 	1,
++	.supports_autosuspend =	1,
+ };
+ 
+ /* There is no MODULE_DEVICE_TABLE for usbserial.c.  Instead
+@@ -1344,6 +1345,8 @@ int usb_serial_register(struct usb_serial_driver *driver)
+ 		return -ENODEV;
+ 
+ 	fixup_generic(driver);
++	if (driver->usb_driver)
++		driver->usb_driver->supports_autosuspend = 1;
+ 
+ 	if (!driver->description)
+ 		driver->description = driver->driver.name;
+-- 
+1.8.1.5
+

@@ -1,0 +1,42 @@
+From 7b86e65e74572b8a2935e136a901a527786d2772 Mon Sep 17 00:00:00 2001
+From: Alex Deucher <alexdeucher@gmail.com>
+Date: Tue, 30 Nov 2010 00:15:10 -0500
+Subject: [PATCH 127/984] drm/radeon/kms: add workaround for dce3 ddc line
+ vbios bug
+
+commit 3074adc8b6d9bf28b574a58241b958057a69a7a0 upstream.
+
+fixes:
+https://bugzilla.kernel.org/show_bug.cgi?id=23752
+
+[AK: Dropped hunk for non existing i2c code in .35]
+Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+Signed-off-by: Dave Airlie <airlied@redhat.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/gpu/drm/radeon/radeon_atombios.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/gpu/drm/radeon/radeon_atombios.c b/drivers/gpu/drm/radeon/radeon_atombios.c
+index d7c18e5..42d876a 100644
+--- a/drivers/gpu/drm/radeon/radeon_atombios.c
++++ b/drivers/gpu/drm/radeon/radeon_atombios.c
+@@ -84,6 +84,14 @@ static inline struct radeon_i2c_bus_rec radeon_lookup_i2c_gpio(struct radeon_dev
+ 		for (i = 0; i < num_indices; i++) {
+ 			gpio = &i2c_info->asGPIO_Info[i];
+ 
++			/* some DCE3 boards have bad data for this entry */
++			if (ASIC_IS_DCE3(rdev)) {
++				if ((i == 4) &&
++				    (gpio->usClkMaskRegisterIndex == 0x1fda) &&
++				    (gpio->sucI2cId.ucAccess == 0x94))
++					gpio->sucI2cId.ucAccess = 0x14;
++			}
++
+ 			if (gpio->sucI2cId.ucAccess == id) {
+ 				i2c.mask_clk_reg = le16_to_cpu(gpio->usClkMaskRegisterIndex) * 4;
+ 				i2c.mask_data_reg = le16_to_cpu(gpio->usDataMaskRegisterIndex) * 4;
+-- 
+1.8.1.5
+

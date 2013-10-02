@@ -1,0 +1,41 @@
+From 37f7a29f540ffaee81648ab757da701a7a8b3dcc Mon Sep 17 00:00:00 2001
+From: Ben Greear <greearb@candelatech.com>
+Date: Tue, 12 Jul 2011 10:27:55 -0700
+Subject: [PATCH 957/984] SUNRPC: Fix use of static variable in
+ rpcb_getport_async
+
+[ upstream commit ec0dd267bf7d08cb30e321e45a75fd40edd7e528 ]
+
+Because struct rpcbind_args *map was declared static, if two
+threads entered this method at the same time, the values
+assigned to map could be sent two two differen tasks.
+This could cause all sorts of problems, include use-after-free
+and double-free of memory.
+
+Fix this by removing the static declaration so that the map
+pointer is on the stack.
+
+Signed-off-by: Ben Greear <greearb@candelatech.com>
+Cc: stable@kernel.org
+Signed-off-by: Trond Myklebust <Trond.Myklebust@netapp.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/sunrpc/rpcb_clnt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/sunrpc/rpcb_clnt.c b/net/sunrpc/rpcb_clnt.c
+index dac219a..4db171f 100644
+--- a/net/sunrpc/rpcb_clnt.c
++++ b/net/sunrpc/rpcb_clnt.c
+@@ -580,7 +580,7 @@ void rpcb_getport_async(struct rpc_task *task)
+ 	u32 bind_version;
+ 	struct rpc_xprt *xprt;
+ 	struct rpc_clnt	*rpcb_clnt;
+-	static struct rpcbind_args *map;
++	struct rpcbind_args *map;
+ 	struct rpc_task	*child;
+ 	struct sockaddr_storage addr;
+ 	struct sockaddr *sap = (struct sockaddr *)&addr;
+-- 
+1.8.1.5
+

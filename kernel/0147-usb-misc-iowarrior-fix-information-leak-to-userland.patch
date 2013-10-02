@@ -1,0 +1,35 @@
+From 5f5e68292004921ff329aa58d27023f5e10ac27a Mon Sep 17 00:00:00 2001
+From: Vasiliy Kulikov <segooon@gmail.com>
+Date: Sat, 6 Nov 2010 17:41:31 +0300
+Subject: [PATCH 147/984] usb: misc: iowarrior: fix information leak to
+ userland
+
+commit eca67aaeebd6e5d22b0d991af1dd0424dc703bfb upstream.
+
+Structure iowarrior_info is copied to userland with padding byted
+between "serial" and "revision" fields uninitialized.  It leads to
+leaking of contents of kernel stack memory.
+
+Signed-off-by: Vasiliy Kulikov <segooon@gmail.com>
+Acked-by: Kees Cook <kees.cook@canonical.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/usb/misc/iowarrior.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/usb/misc/iowarrior.c b/drivers/usb/misc/iowarrior.c
+index 7dc9d3c..b47e694 100644
+--- a/drivers/usb/misc/iowarrior.c
++++ b/drivers/usb/misc/iowarrior.c
+@@ -552,6 +552,7 @@ static long iowarrior_ioctl(struct file *file, unsigned int cmd,
+ 			/* needed for power consumption */
+ 			struct usb_config_descriptor *cfg_descriptor = &dev->udev->actconfig->desc;
+ 
++			memset(&info, 0, sizeof(info));
+ 			/* directly from the descriptor */
+ 			info.vendor = le16_to_cpu(dev->udev->descriptor.idVendor);
+ 			info.product = dev->product_id;
+-- 
+1.8.1.5
+

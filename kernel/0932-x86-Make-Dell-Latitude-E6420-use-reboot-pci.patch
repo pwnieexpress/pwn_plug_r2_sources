@@ -1,0 +1,47 @@
+From 76a1fd83341756986f8c317109aff4ac3d27ba97 Mon Sep 17 00:00:00 2001
+From: "H. Peter Anvin" <hpa@zytor.com>
+Date: Thu, 21 Jul 2011 11:22:21 -0700
+Subject: [PATCH 932/984] x86: Make Dell Latitude E6420 use reboot=pci
+
+[ upstream commit a536877e77f73ea22d12d94a019fedd9671b6acd ]
+
+Yet another variant of the Dell Latitude series which requires
+reboot=pci.
+
+From the E5420 bug report by Daniel J Blueman:
+
+> The E6420 is affected also (same platform, different casing and
+> features), which provides an external confirmation of the issue; I can
+> submit a patch for that later or include it if you prefer:
+> http://linux.koolsolutions.com/2009/08/04/howto-fix-linux-hangfreeze-during-reboots-and-restarts/
+
+Reported-by: Daniel J Blueman <daniel.blueman@gmail.com>
+Signed-off-by: H. Peter Anvin <hpa@zytor.com>
+Cc: <stable@kernel.org>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ arch/x86/kernel/reboot.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/arch/x86/kernel/reboot.c b/arch/x86/kernel/reboot.c
+index d91d3f2..807e3c9 100644
+--- a/arch/x86/kernel/reboot.c
++++ b/arch/x86/kernel/reboot.c
+@@ -485,6 +485,14 @@ static struct dmi_system_id __initdata pci_reboot_dmi_table[] = {
+ 			DMI_MATCH(DMI_PRODUCT_NAME, "Latitude E5420"),
+ 		},
+ 	},
++	{	/* Handle problems with rebooting on the Latitude E6420. */
++		.callback = set_pci_reboot,
++		.ident = "Dell Latitude E6420",
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc."),
++			DMI_MATCH(DMI_PRODUCT_NAME, "Latitude E6420"),
++		},
++	},
+ 	{ }
+ };
+ 
+-- 
+1.8.1.5
+

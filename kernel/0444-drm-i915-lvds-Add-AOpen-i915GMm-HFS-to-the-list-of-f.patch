@@ -1,0 +1,38 @@
+From 47cf86927073a10323fa5ce198adba1ce69b3748 Mon Sep 17 00:00:00 2001
+From: Knut Petersen <knut_petersen@t-online.de>
+Date: Fri, 14 Jan 2011 15:38:10 +0000
+Subject: [PATCH 444/984] drm/i915/lvds: Add AOpen i915GMm-HFS to the list of
+ false-positive LVDS
+
+commit 22ab70d3262ddb6e69b3c246a34e2967ba5eb1e8 upstream.
+
+Signed-off-by: Knut Petersen <knut_petersen@t-online.de>
+Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/gpu/drm/i915/intel_lvds.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/gpu/drm/i915/intel_lvds.c b/drivers/gpu/drm/i915/intel_lvds.c
+index 7d42ff1..1266ab3 100644
+--- a/drivers/gpu/drm/i915/intel_lvds.c
++++ b/drivers/gpu/drm/i915/intel_lvds.c
+@@ -811,6 +811,14 @@ static const struct dmi_system_id intel_no_lvds[] = {
+ 	},
+ 	{
+ 		.callback = intel_no_lvds_dmi_callback,
++		.ident = "AOpen i915GMm-HFS",
++		.matches = {
++			DMI_MATCH(DMI_BOARD_VENDOR, "AOpen"),
++			DMI_MATCH(DMI_BOARD_NAME, "i915GMm-HFS"),
++		},
++	},
++	{
++		.callback = intel_no_lvds_dmi_callback,
+ 		.ident = "Aopen i945GTt-VFA",
+ 		.matches = {
+ 			DMI_MATCH(DMI_PRODUCT_VERSION, "AO00001JW"),
+-- 
+1.8.1.5
+

@@ -1,0 +1,44 @@
+From 18f41f489a1ee1b296482d1b5bdf2ea4f8625cb6 Mon Sep 17 00:00:00 2001
+From: Ian Campbell <ian.campbell@citrix.com>
+Date: Fri, 8 Oct 2010 16:59:12 +0100
+Subject: [PATCH 078/984] xen: ensure that all event channels start off bound
+ to VCPU 0
+
+commit b0097adeec27e30223c989561ab0f7aa60d1fe93 upstream.
+
+All event channels startbound to VCPU 0 so ensure that cpu_evtchn_mask
+is initialised to reflect this. Otherwise there is a race after registering an
+event channel but before the affinity is explicitly set where the event channel
+can be delivered. If this happens then the event channel remains pending in the
+L1 (evtchn_pending) array but is cleared in L2 (evtchn_pending_sel), this means
+the event channel cannot be reraised until another event channel happens to
+trigger the same L2 entry on that VCPU.
+
+sizeof(cpu_evtchn_mask(0))==sizeof(unsigned long*) which is not correct, and
+causes only the first 32 or 64 event channels (depending on architecture) to be
+initially bound to VCPU0. Use sizeof(struct cpu_evtchn_s) instead.
+
+Signed-off-by: Ian Campbell <ian.campbell@citrix.com>
+Cc: Jeremy Fitzhardinge <jeremy@goop.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/xen/events.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/xen/events.c b/drivers/xen/events.c
+index 6830a4d..0769108 100644
+--- a/drivers/xen/events.c
++++ b/drivers/xen/events.c
+@@ -256,7 +256,7 @@ static void init_evtchn_cpu_bindings(void)
+ 	}
+ #endif
+ 
+-	memset(cpu_evtchn_mask(0), ~0, sizeof(cpu_evtchn_mask(0)));
++	memset(cpu_evtchn_mask(0), ~0, sizeof(struct cpu_evtchn_s));
+ }
+ 
+ static inline void clear_evtchn(int port)
+-- 
+1.8.1.5
+

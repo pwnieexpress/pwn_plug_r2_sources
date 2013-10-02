@@ -1,0 +1,43 @@
+From 4749480caa4baa97804bbce1ccf873d29b04ca43 Mon Sep 17 00:00:00 2001
+From: Vasiliy Kulikov <segoon@openwall.com>
+Date: Fri, 4 Feb 2011 15:23:36 +0300
+Subject: [PATCH 667/984] mfd: ab3100: world-writable debugfs *_priv files
+
+commit f8a0697722d12a201588225999cfc8bfcbc82781 upstream.
+
+Don't allow everybody to change device hardware registers.
+
+Signed-off-by: Vasiliy Kulikov <segoon@openwall.com>
+Acked-by: Linus Walleij <linus.walleij@stericsson.com>
+Signed-off-by: Samuel Ortiz <sameo@linux.intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/mfd/ab3100-core.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/mfd/ab3100-core.c b/drivers/mfd/ab3100-core.c
+index 66379b4..c55e0a3 100644
+--- a/drivers/mfd/ab3100-core.c
++++ b/drivers/mfd/ab3100-core.c
+@@ -611,7 +611,7 @@ static void ab3100_setup_debugfs(struct ab3100 *ab3100)
+ 	ab3100_get_priv.ab3100 = ab3100;
+ 	ab3100_get_priv.mode = false;
+ 	ab3100_get_reg_file = debugfs_create_file("get_reg",
+-				S_IWUGO, ab3100_dir, &ab3100_get_priv,
++				S_IWUSR, ab3100_dir, &ab3100_get_priv,
+ 				&ab3100_get_set_reg_fops);
+ 	if (!ab3100_get_reg_file) {
+ 		err = -ENOMEM;
+@@ -621,7 +621,7 @@ static void ab3100_setup_debugfs(struct ab3100 *ab3100)
+ 	ab3100_set_priv.ab3100 = ab3100;
+ 	ab3100_set_priv.mode = true;
+ 	ab3100_set_reg_file = debugfs_create_file("set_reg",
+-				S_IWUGO, ab3100_dir, &ab3100_set_priv,
++				S_IWUSR, ab3100_dir, &ab3100_set_priv,
+ 				&ab3100_get_set_reg_fops);
+ 	if (!ab3100_set_reg_file) {
+ 		err = -ENOMEM;
+-- 
+1.8.1.5
+

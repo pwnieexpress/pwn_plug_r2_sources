@@ -1,0 +1,36 @@
+From 693560d364dc64efed3da660b62948368132754a Mon Sep 17 00:00:00 2001
+From: Rajkumar Manoharan <rmanohar@qca.qualcomm.com>
+Date: Thu, 7 Jul 2011 23:33:39 +0530
+Subject: [PATCH 962/984] mac80211: Restart STA timers only on associated state
+
+[ upstream commit 676b58c27475a9defccc025fea1cbd2b141ee539 ]
+
+A panic was observed when the device is failed to resume properly,
+and there are no running interfaces. ieee80211_reconfig tries
+to restart STA timers on unassociated state.
+
+Cc: stable@kernel.org
+Signed-off-by: Rajkumar Manoharan <rmanohar@qca.qualcomm.com>
+Signed-off-by: John W. Linville <linville@tuxdriver.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/mac80211/mlme.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/net/mac80211/mlme.c b/net/mac80211/mlme.c
+index 090b3e6..5ee5db6 100644
+--- a/net/mac80211/mlme.c
++++ b/net/mac80211/mlme.c
+@@ -1995,6 +1995,9 @@ void ieee80211_sta_restart(struct ieee80211_sub_if_data *sdata)
+ {
+ 	struct ieee80211_if_managed *ifmgd = &sdata->u.mgd;
+ 
++	if (!ifmgd->associated)
++		return;
++
+ 	if (test_and_clear_bit(TMR_RUNNING_TIMER, &ifmgd->timers_running))
+ 		add_timer(&ifmgd->timer);
+ 	if (test_and_clear_bit(TMR_RUNNING_CHANSW, &ifmgd->timers_running))
+-- 
+1.8.1.5
+

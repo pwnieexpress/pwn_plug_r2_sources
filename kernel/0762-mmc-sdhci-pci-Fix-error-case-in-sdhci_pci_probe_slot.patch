@@ -1,0 +1,39 @@
+From 725296955c01285787cdfbaf813298626c9c09ee Mon Sep 17 00:00:00 2001
+From: Chris Ball <cjb@laptop.org>
+Date: Tue, 29 Mar 2011 00:46:12 -0400
+Subject: [PATCH 762/984] mmc: sdhci-pci: Fix error case in
+ sdhci_pci_probe_slot()
+
+commit 9fdcdbb0d84922e7ccda2f717a04ea62629f7e18 upstream.
+
+If pci_ioremap_bar() fails during probe, we "goto release;" and free the
+host, but then we return 0 -- which tells sdhci_pci_probe() that the probe
+succeeded.  Since we think the probe succeeded, when we unload sdhci we'll
+go to sdhci_pci_remove_slot() and it will try to dereference slot->host,
+which is now NULL because we freed it in the error path earlier.
+
+The patch simply sets ret appropriately, so that sdhci_pci_probe() will
+detect the failure immediately and bail out.
+
+Signed-off-by: Chris Ball <cjb@laptop.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/mmc/host/sdhci-pci.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/mmc/host/sdhci-pci.c b/drivers/mmc/host/sdhci-pci.c
+index 65483fd..657809a 100644
+--- a/drivers/mmc/host/sdhci-pci.c
++++ b/drivers/mmc/host/sdhci-pci.c
+@@ -653,6 +653,7 @@ static struct sdhci_pci_slot * __devinit sdhci_pci_probe_slot(
+ 	host->ioaddr = pci_ioremap_bar(pdev, bar);
+ 	if (!host->ioaddr) {
+ 		dev_err(&pdev->dev, "failed to remap registers\n");
++		ret = -ENOMEM;
+ 		goto release;
+ 	}
+ 
+-- 
+1.8.1.5
+

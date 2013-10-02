@@ -1,0 +1,38 @@
+From 39ab95f709fd14c0542ad9e5eaebebc30c681094 Mon Sep 17 00:00:00 2001
+From: Wolfram Sang <w.sang@pengutronix.de>
+Date: Tue, 21 Dec 2010 17:24:24 -0800
+Subject: [PATCH 333/984] rtc: rs5c372: fix buffer size
+
+commit 118364948fad7b6c0469ef2d3ddaee447d7a0b5f upstream.
+
+Match the buffer size to the amount of initialized values.  Before, it was
+one too big and thus destroyed the neighbouring register causing the clock
+to run at false speeds.
+
+Reported-by: Andre van Rooyen <a.v.rooyen@sercom.nl>
+Signed-off-by: Wolfram Sang <w.sang@pengutronix.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+Cc: Alessandro Zummo <a.zummo@towertech.it>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+ drivers/rtc/rtc-rs5c372.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/rtc/rtc-rs5c372.c b/drivers/rtc/rtc-rs5c372.c
+index 90cf0a6..dd14e20 100644
+--- a/drivers/rtc/rtc-rs5c372.c
++++ b/drivers/rtc/rtc-rs5c372.c
+@@ -207,7 +207,7 @@ static int rs5c372_get_datetime(struct i2c_client *client, struct rtc_time *tm)
+ static int rs5c372_set_datetime(struct i2c_client *client, struct rtc_time *tm)
+ {
+ 	struct rs5c372	*rs5c = i2c_get_clientdata(client);
+-	unsigned char	buf[8];
++	unsigned char	buf[7];
+ 	int		addr;
+ 
+ 	dev_dbg(&client->dev, "%s: tm is secs=%d, mins=%d, hours=%d "
+-- 
+1.8.1.5
+

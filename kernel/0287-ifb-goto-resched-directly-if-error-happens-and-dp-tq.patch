@@ -1,0 +1,41 @@
+From 9cd02000aea2084bbd44091f10877a3d921291d0 Mon Sep 17 00:00:00 2001
+From: Changli Gao <xiaosuo@gmail.com>
+Date: Sat, 4 Dec 2010 14:09:08 +0000
+Subject: [PATCH 287/984] ifb: goto resched directly if error happens and
+ dp->tq isn't empty
+
+[ Upstream commit 75c1c82566f23dd539fb7ccbf57a1caa7ba82628 ]
+
+If we break the loop when there are still skbs in tq and no skb in
+rq, the skbs will be left in txq until new skbs are enqueued into rq.
+In rare cases, no new skb is queued, then these skbs will stay in rq
+forever.
+
+After this patch, if tq isn't empty when we break the loop, we goto
+resched directly.
+
+Signed-off-by: Changli Gao <xiaosuo@gmail.com>
+Signed-off-by: Jamal Hadi Salim <hadi@cyberus.ca>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/net/ifb.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/net/ifb.c b/drivers/net/ifb.c
+index ab9f675..fe337bd 100644
+--- a/drivers/net/ifb.c
++++ b/drivers/net/ifb.c
+@@ -104,6 +104,8 @@ static void ri_tasklet(unsigned long dev)
+ 			rcu_read_unlock();
+ 			dev_kfree_skb(skb);
+ 			stats->tx_dropped++;
++			if (skb_queue_len(&dp->tq) != 0)
++				goto resched;
+ 			break;
+ 		}
+ 		rcu_read_unlock();
+-- 
+1.8.1.5
+

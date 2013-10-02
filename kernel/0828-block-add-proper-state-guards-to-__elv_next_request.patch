@@ -1,0 +1,39 @@
+From 0871ccb857a76c76be1e4c8b3d1dfdd7f3e91fe7 Mon Sep 17 00:00:00 2001
+From: James Bottomley <James.Bottomley@suse.de>
+Date: Wed, 18 May 2011 16:20:10 +0200
+Subject: [PATCH 828/984] block: add proper state guards to __elv_next_request
+
+commit 0a58e077eb600d1efd7e54ad9926a75a39d7f8ae upstream.
+
+blk_cleanup_queue() calls elevator_exit() and after this, we can't
+touch the elevator without oopsing.  __elv_next_request() must check
+for this state because in the refcounted queue model, we can still
+call it after blk_cleanup_queue() has been called.
+
+This was reported as causing an oops attributable to scsi.
+
+Signed-off-by: James Bottomley <James.Bottomley@suse.de>
+Signed-off-by: Jens Axboe <jaxboe@fusionio.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ block/blk.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/block/blk.h b/block/blk.h
+index 5ee3d7e..1414836 100644
+--- a/block/blk.h
++++ b/block/blk.h
+@@ -62,7 +62,8 @@ static inline struct request *__elv_next_request(struct request_queue *q)
+ 				return rq;
+ 		}
+ 
+-		if (!q->elevator->ops->elevator_dispatch_fn(q, 0))
++		if (test_bit(QUEUE_FLAG_DEAD, &q->queue_flags) ||
++		    !q->elevator->ops->elevator_dispatch_fn(q, 0))
+ 			return NULL;
+ 	}
+ }
+-- 
+1.8.1.5
+

@@ -1,0 +1,43 @@
+From 6093240b06916ca21216bb4728f79b264fd08e30 Mon Sep 17 00:00:00 2001
+From: Artem Bityutskiy <Artem.Bityutskiy@nokia.com>
+Date: Tue, 31 May 2011 07:03:21 +0300
+Subject: [PATCH 869/984] UBIFS: fix shrinker object count reports
+
+commit cf610bf4199770420629d3bc273494bd27ad6c1d upstream.
+
+Sometimes VM asks the shrinker to return amount of objects it can shrink,
+and we return the ubifs_clean_zn_cnt in that case. However, it is possible
+that this counter is negative for a short period of time, due to the way
+UBIFS TNC code updates it. And I can observe the following warnings sometimes:
+
+shrink_slab: ubifs_shrinker+0x0/0x2b7 [ubifs] negative objects to delete nr=-8541616642706119788
+
+This patch makes sure UBIFS never returns negative count of objects.
+
+Signed-off-by: Artem Bityutskiy <Artem.Bityutskiy@nokia.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ fs/ubifs/shrinker.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/fs/ubifs/shrinker.c b/fs/ubifs/shrinker.c
+index 0b20111..5306c91 100644
+--- a/fs/ubifs/shrinker.c
++++ b/fs/ubifs/shrinker.c
+@@ -283,7 +283,11 @@ int ubifs_shrinker(struct shrinker *shrink, int nr, gfp_t gfp_mask)
+ 	long clean_zn_cnt = atomic_long_read(&ubifs_clean_zn_cnt);
+ 
+ 	if (nr == 0)
+-		return clean_zn_cnt;
++		/*
++		 * Due to the way UBIFS updates the clean znode counter it may
++		 * temporarily be negative.
++		 */
++		return clean_zn_cnt >= 0 ? clean_zn_cnt : 1;
+ 
+ 	if (!clean_zn_cnt) {
+ 		/*
+-- 
+1.8.1.5
+

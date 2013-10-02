@@ -1,0 +1,56 @@
+From b0866f4e290b7a45d1e2e82ec32a45d1a83c1737 Mon Sep 17 00:00:00 2001
+From: Greg Kroah-Hartman <gregkh@suse.de>
+Date: Mon, 15 Nov 2010 11:11:45 -0800
+Subject: [PATCH 152/984] USB: atm: ueagle-atm: fix up some permissions on the
+ sysfs files
+
+commit e502ac5e1eca99d7dc3f12b2a6780ccbca674858 upstream.
+
+Some of the sysfs files had the incorrect permissions.  Some didn't make
+sense at all (writable for a file that you could not write to?)
+
+Reported-by: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Matthieu Castet <castet.matthieu@free.fr>
+Cc: Stanislaw Gruszka <stf_xl@wp.pl>
+Cc: Damien Bergamini <damien.bergamini@free.fr>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/usb/atm/ueagle-atm.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/usb/atm/ueagle-atm.c b/drivers/usb/atm/ueagle-atm.c
+index e213d3f..51dc44d 100644
+--- a/drivers/usb/atm/ueagle-atm.c
++++ b/drivers/usb/atm/ueagle-atm.c
+@@ -2291,7 +2291,7 @@ out:
+ 	return ret;
+ }
+ 
+-static DEVICE_ATTR(stat_status, S_IWUGO | S_IRUGO, read_status, reboot);
++static DEVICE_ATTR(stat_status, S_IWUSR | S_IRUGO, read_status, reboot);
+ 
+ static ssize_t read_human_status(struct device *dev,
+ 			struct device_attribute *attr, char *buf)
+@@ -2354,8 +2354,7 @@ out:
+ 	return ret;
+ }
+ 
+-static DEVICE_ATTR(stat_human_status, S_IWUGO | S_IRUGO,
+-				read_human_status, NULL);
++static DEVICE_ATTR(stat_human_status, S_IRUGO, read_human_status, NULL);
+ 
+ static ssize_t read_delin(struct device *dev, struct device_attribute *attr,
+ 		char *buf)
+@@ -2387,7 +2386,7 @@ out:
+ 	return ret;
+ }
+ 
+-static DEVICE_ATTR(stat_delin, S_IWUGO | S_IRUGO, read_delin, NULL);
++static DEVICE_ATTR(stat_delin, S_IRUGO, read_delin, NULL);
+ 
+ #define UEA_ATTR(name, reset)					\
+ 								\
+-- 
+1.8.1.5
+

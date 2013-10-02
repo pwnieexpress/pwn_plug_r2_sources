@@ -1,0 +1,56 @@
+From a664846f7362bd6b9cf6f1e407dd86daa963da97 Mon Sep 17 00:00:00 2001
+From: Johannes Berg <johannes.berg@intel.com>
+Date: Tue, 5 Oct 2010 21:40:33 +0200
+Subject: [PATCH 026/984] mac80211: delete AddBA response timer
+
+commit 44271488b91c9eecf249e075a1805dd887e222d2 upstream.
+
+We never delete the addBA response timer, which
+is typically fine, but if the station it belongs
+to is deleted very quickly after starting the BA
+session, before the peer had a chance to reply,
+the timer may fire after the station struct has
+been freed already. Therefore, we need to delete
+the timer in a suitable spot -- best when the
+session is being stopped (which will happen even
+then) in which case the delete will be a no-op
+most of the time.
+
+I've reproduced the scenario and tested the fix.
+
+This fixes the crash reported at
+http://mid.gmane.org/4CAB6F96.6090701@candelatech.com
+
+Reported-by: Ben Greear <greearb@candelatech.com>
+Signed-off-by: Johannes Berg <johannes.berg@intel.com>
+Signed-off-by: John W. Linville <linville@tuxdriver.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/mac80211/agg-tx.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/net/mac80211/agg-tx.c b/net/mac80211/agg-tx.c
+index 98258b7..f935490 100644
+--- a/net/mac80211/agg-tx.c
++++ b/net/mac80211/agg-tx.c
+@@ -128,6 +128,7 @@ void ieee80211_send_bar(struct ieee80211_sub_if_data *sdata, u8 *ra, u16 tid, u1
+ int ___ieee80211_stop_tx_ba_session(struct sta_info *sta, u16 tid,
+ 				    enum ieee80211_back_parties initiator)
+ {
++	struct tid_ampdu_tx *tid_tx = sta->ampdu_mlme.tid_tx[tid];
+ 	struct ieee80211_local *local = sta->local;
+ 	int ret;
+ 	u8 *state;
+@@ -137,6 +138,8 @@ int ___ieee80211_stop_tx_ba_session(struct sta_info *sta, u16 tid,
+ 	       sta->sta.addr, tid);
+ #endif /* CONFIG_MAC80211_HT_DEBUG */
+ 
++	del_timer_sync(&tid_tx->addba_resp_timer);
++
+ 	state = &sta->ampdu_mlme.tid_state_tx[tid];
+ 
+ 	if (*state == HT_AGG_STATE_OPERATIONAL)
+-- 
+1.8.1.5
+

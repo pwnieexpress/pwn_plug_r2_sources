@@ -1,0 +1,55 @@
+From 64779cb190a6ba7a03b658cd0584cef74fb9c208 Mon Sep 17 00:00:00 2001
+From: Will Deacon <will.deacon@arm.com>
+Date: Fri, 1 Jul 2011 14:38:12 +0100
+Subject: [PATCH 977/984] ARM: 6989/1: perf: do not start the PMU when no
+ events are
+
+[ upstream commit f4f38430c94c38187db73a2cf3892cc8b12a2713 ]
+ present
+
+armpmu_enable can be called in situations where no events are present
+(for example, from the event rotation tick after a profiled task has
+exited). In this case, we currently start the PMU anyway which may
+leave it active inevitably without any events being monitored.
+
+This patch adds a simple check to the enabling code so that we avoid
+starting the PMU when no events are present.
+
+Cc: <stable@kernel.org>
+Reported-by: Ashwin Chaugle <ashwinc@codeaurora.org>
+Signed-off-by: Will Deacon <will.deacon@arm.com>
+Signed-off-by: Russell King <rmk+kernel@arm.linux.org.uk>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ arch/arm/kernel/perf_event.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/kernel/perf_event.c b/arch/arm/kernel/perf_event.c
+index de12536..2297594 100644
+--- a/arch/arm/kernel/perf_event.c
++++ b/arch/arm/kernel/perf_event.c
+@@ -531,7 +531,7 @@ void
+ hw_perf_enable(void)
+ {
+ 	/* Enable all of the perf events on hardware. */
+-	int idx;
++	int idx, enabled = 0;
+ 	struct cpu_hw_events *cpuc = &__get_cpu_var(cpu_hw_events);
+ 
+ 	if (!armpmu)
+@@ -544,9 +544,11 @@ hw_perf_enable(void)
+ 			continue;
+ 
+ 		armpmu->enable(&event->hw, idx);
++		enabled = 1;
+ 	}
+ 
+-	armpmu->start();
++	if (enabled)
++		armpmu->start();
+ }
+ 
+ void
+-- 
+1.8.1.5
+

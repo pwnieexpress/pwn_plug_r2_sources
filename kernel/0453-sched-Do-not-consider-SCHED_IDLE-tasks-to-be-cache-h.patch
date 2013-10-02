@@ -1,0 +1,42 @@
+From 1f8e01cc3447bb1c18014be7de43e1fef344e0c1 Mon Sep 17 00:00:00 2001
+From: Nikhil Rao <ncrao@google.com>
+Date: Thu, 10 Feb 2011 10:23:25 +0100
+Subject: [PATCH 453/984] sched: Do not consider SCHED_IDLE tasks to be cache
+ hot
+
+Commit: ef8002f6848236de5adc613063ebeabddea8a6fb upstream
+
+This patch adds a check in task_hot to return if the task has SCHED_IDLE
+policy. SCHED_IDLE tasks have very low weight, and when run with regular
+workloads, are typically scheduled many milliseconds apart. There is no
+need to consider these tasks hot for load balancing.
+
+Signed-off-by: Nikhil Rao <ncrao@google.com>
+Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+LKML-Reference: <1287173550-30365-2-git-send-email-ncrao@google.com>
+Signed-off-by: Ingo Molnar <mingo@elte.hu>
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+Acked-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+ kernel/sched.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 1747071..5ea39ad 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -1972,6 +1972,9 @@ task_hot(struct task_struct *p, u64 now, struct sched_domain *sd)
+ 	if (p->sched_class != &fair_sched_class)
+ 		return 0;
+ 
++	if (unlikely(p->policy == SCHED_IDLE))
++		return 0;
++
+ 	/*
+ 	 * Buddy candidates are cache hot:
+ 	 */
+-- 
+1.8.1.5
+

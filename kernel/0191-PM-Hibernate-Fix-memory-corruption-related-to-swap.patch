@@ -1,0 +1,237 @@
+From f0ad38dade9e69ffefc37734b37e3bd93654a00f Mon Sep 17 00:00:00 2001
+From: "Rafael J. Wysocki" <rjw@sisk.pl>
+Date: Fri, 3 Dec 2010 22:57:45 +0100
+Subject: [PATCH 191/984] PM / Hibernate: Fix memory corruption related to swap
+
+commit c9e664f1fdf34aa8cede047b206deaa8f1945af0 upstream.
+
+There is a problem that swap pages allocated before the creation of
+a hibernation image can be released and used for storing the contents
+of different memory pages while the image is being saved.  Since the
+kernel stored in the image doesn't know of that, it causes memory
+corruption to occur after resume from hibernation, especially on
+systems with relatively small RAM that need to swap often.
+
+This issue can be addressed by keeping the GFP_IOFS bits clear
+in gfp_allowed_mask during the entire hibernation, including the
+saving of the image, until the system is finally turned off or
+the hibernation is aborted.  Unfortunately, for this purpose
+it's necessary to rework the way in which the hibernate and
+suspend code manipulates gfp_allowed_mask.
+
+This change is based on an earlier patch from Hugh Dickins.
+
+Signed-off-by: Rafael J. Wysocki <rjw@sisk.pl>
+Reported-by: Ondrej Zary <linux@rainbow-software.org>
+Acked-by: Hugh Dickins <hughd@google.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+Reviewed-by: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+ include/linux/gfp.h      |  4 ++--
+ kernel/power/hibernate.c | 22 ++++++++++++----------
+ kernel/power/suspend.c   |  5 ++---
+ kernel/power/user.c      |  2 ++
+ mm/page_alloc.c          | 19 ++++++++++++-------
+ 5 files changed, 30 insertions(+), 22 deletions(-)
+
+diff --git a/include/linux/gfp.h b/include/linux/gfp.h
+index 975609c..81483c2 100644
+--- a/include/linux/gfp.h
++++ b/include/linux/gfp.h
+@@ -339,7 +339,7 @@ void drain_local_pages(void *dummy);
+ 
+ extern gfp_t gfp_allowed_mask;
+ 
+-extern void set_gfp_allowed_mask(gfp_t mask);
+-extern gfp_t clear_gfp_allowed_mask(gfp_t mask);
++extern void pm_restrict_gfp_mask(void);
++extern void pm_restore_gfp_mask(void);
+ 
+ #endif /* __LINUX_GFP_H */
+diff --git a/kernel/power/hibernate.c b/kernel/power/hibernate.c
+index aa9e916..684463e 100644
+--- a/kernel/power/hibernate.c
++++ b/kernel/power/hibernate.c
+@@ -324,7 +324,6 @@ static int create_image(int platform_mode)
+ int hibernation_snapshot(int platform_mode)
+ {
+ 	int error;
+-	gfp_t saved_mask;
+ 
+ 	error = platform_begin(platform_mode);
+ 	if (error)
+@@ -336,7 +335,7 @@ int hibernation_snapshot(int platform_mode)
+ 		goto Close;
+ 
+ 	suspend_console();
+-	saved_mask = clear_gfp_allowed_mask(GFP_IOFS);
++	pm_restrict_gfp_mask();
+ 	error = dpm_suspend_start(PMSG_FREEZE);
+ 	if (error)
+ 		goto Recover_platform;
+@@ -345,7 +344,10 @@ int hibernation_snapshot(int platform_mode)
+ 		goto Recover_platform;
+ 
+ 	error = create_image(platform_mode);
+-	/* Control returns here after successful restore */
++	/*
++	 * Control returns here (1) after the image has been created or the
++	 * image creation has failed and (2) after a successful restore.
++	 */
+ 
+  Resume_devices:
+ 	/* We may need to release the preallocated image pages here. */
+@@ -354,7 +356,10 @@ int hibernation_snapshot(int platform_mode)
+ 
+ 	dpm_resume_end(in_suspend ?
+ 		(error ? PMSG_RECOVER : PMSG_THAW) : PMSG_RESTORE);
+-	set_gfp_allowed_mask(saved_mask);
++
++	if (error || !in_suspend)
++		pm_restore_gfp_mask();
++
+ 	resume_console();
+  Close:
+ 	platform_end(platform_mode);
+@@ -449,17 +454,16 @@ static int resume_target_kernel(bool platform_mode)
+ int hibernation_restore(int platform_mode)
+ {
+ 	int error;
+-	gfp_t saved_mask;
+ 
+ 	pm_prepare_console();
+ 	suspend_console();
+-	saved_mask = clear_gfp_allowed_mask(GFP_IOFS);
++	pm_restrict_gfp_mask();
+ 	error = dpm_suspend_start(PMSG_QUIESCE);
+ 	if (!error) {
+ 		error = resume_target_kernel(platform_mode);
+ 		dpm_resume_end(PMSG_RECOVER);
+ 	}
+-	set_gfp_allowed_mask(saved_mask);
++	pm_restore_gfp_mask();
+ 	resume_console();
+ 	pm_restore_console();
+ 	return error;
+@@ -473,7 +477,6 @@ int hibernation_restore(int platform_mode)
+ int hibernation_platform_enter(void)
+ {
+ 	int error;
+-	gfp_t saved_mask;
+ 
+ 	if (!hibernation_ops)
+ 		return -ENOSYS;
+@@ -489,7 +492,6 @@ int hibernation_platform_enter(void)
+ 
+ 	entering_platform_hibernation = true;
+ 	suspend_console();
+-	saved_mask = clear_gfp_allowed_mask(GFP_IOFS);
+ 	error = dpm_suspend_start(PMSG_HIBERNATE);
+ 	if (error) {
+ 		if (hibernation_ops->recover)
+@@ -527,7 +529,6 @@ int hibernation_platform_enter(void)
+  Resume_devices:
+ 	entering_platform_hibernation = false;
+ 	dpm_resume_end(PMSG_RESTORE);
+-	set_gfp_allowed_mask(saved_mask);
+ 	resume_console();
+ 
+  Close:
+@@ -635,6 +636,7 @@ int hibernate(void)
+ 		swsusp_free();
+ 		if (!error)
+ 			power_down();
++		pm_restore_gfp_mask();
+ 	} else {
+ 		pr_debug("PM: Image restored successfully.\n");
+ 	}
+diff --git a/kernel/power/suspend.c b/kernel/power/suspend.c
+index f37cb7d..b0f28dd 100644
+--- a/kernel/power/suspend.c
++++ b/kernel/power/suspend.c
+@@ -196,7 +196,6 @@ static int suspend_enter(suspend_state_t state)
+ int suspend_devices_and_enter(suspend_state_t state)
+ {
+ 	int error;
+-	gfp_t saved_mask;
+ 
+ 	if (!suspend_ops)
+ 		return -ENOSYS;
+@@ -207,7 +206,7 @@ int suspend_devices_and_enter(suspend_state_t state)
+ 			goto Close;
+ 	}
+ 	suspend_console();
+-	saved_mask = clear_gfp_allowed_mask(GFP_IOFS);
++	pm_restrict_gfp_mask();
+ 	suspend_test_start();
+ 	error = dpm_suspend_start(PMSG_SUSPEND);
+ 	if (error) {
+@@ -224,7 +223,7 @@ int suspend_devices_and_enter(suspend_state_t state)
+ 	suspend_test_start();
+ 	dpm_resume_end(PMSG_RESUME);
+ 	suspend_test_finish("resume devices");
+-	set_gfp_allowed_mask(saved_mask);
++	pm_restore_gfp_mask();
+ 	resume_console();
+  Close:
+ 	if (suspend_ops->end)
+diff --git a/kernel/power/user.c b/kernel/power/user.c
+index e819e17..1b2ea31 100644
+--- a/kernel/power/user.c
++++ b/kernel/power/user.c
+@@ -263,6 +263,7 @@ static long snapshot_ioctl(struct file *filp, unsigned int cmd,
+ 	case SNAPSHOT_UNFREEZE:
+ 		if (!data->frozen || data->ready)
+ 			break;
++		pm_restore_gfp_mask();
+ 		thaw_processes();
+ 		usermodehelper_enable();
+ 		data->frozen = 0;
+@@ -275,6 +276,7 @@ static long snapshot_ioctl(struct file *filp, unsigned int cmd,
+ 			error = -EPERM;
+ 			break;
+ 		}
++		pm_restore_gfp_mask();
+ 		error = hibernation_snapshot(data->platform_support);
+ 		if (!error)
+ 			error = put_user(in_suspend, (int __user *)arg);
+diff --git a/mm/page_alloc.c b/mm/page_alloc.c
+index 3390da6..2b085d5 100644
+--- a/mm/page_alloc.c
++++ b/mm/page_alloc.c
+@@ -103,19 +103,24 @@ gfp_t gfp_allowed_mask __read_mostly = GFP_BOOT_MASK;
+  * only be modified with pm_mutex held, unless the suspend/hibernate code is
+  * guaranteed not to run in parallel with that modification).
+  */
+-void set_gfp_allowed_mask(gfp_t mask)
++
++static gfp_t saved_gfp_mask;
++
++void pm_restore_gfp_mask(void)
+ {
+ 	WARN_ON(!mutex_is_locked(&pm_mutex));
+-	gfp_allowed_mask = mask;
++	if (saved_gfp_mask) {
++		gfp_allowed_mask = saved_gfp_mask;
++		saved_gfp_mask = 0;
++	}
+ }
+ 
+-gfp_t clear_gfp_allowed_mask(gfp_t mask)
++void pm_restrict_gfp_mask(void)
+ {
+-	gfp_t ret = gfp_allowed_mask;
+-
+ 	WARN_ON(!mutex_is_locked(&pm_mutex));
+-	gfp_allowed_mask &= ~mask;
+-	return ret;
++	WARN_ON(saved_gfp_mask);
++	saved_gfp_mask = gfp_allowed_mask;
++	gfp_allowed_mask &= ~GFP_IOFS;
+ }
+ #endif /* CONFIG_PM_SLEEP */
+ 
+-- 
+1.8.1.5
+

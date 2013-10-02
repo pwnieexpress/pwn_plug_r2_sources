@@ -1,0 +1,48 @@
+From f452581990ad01497dfefb023102d7dc49cbe75a Mon Sep 17 00:00:00 2001
+From: Hans Verkuil <hans.verkuil@cisco.com>
+Date: Sun, 12 Jun 2011 06:39:52 -0300
+Subject: [PATCH 966/984] pvrusb2: fix g/s_tuner support
+
+[ upstream commit 50e9efd60b213ce43ad6979bfc18e25eec2d8413 ]
+
+The tuner-core subdev requires that the type field of v4l2_tuner is
+filled in correctly. This is done in v4l2-ioctl.c, but pvrusb2 doesn't
+use that yet, so we have to do it manually based on whether the current
+input is radio or not.
+
+Tested with my pvrusb2.
+
+Signed-off-by: Hans Verkuil <hans.verkuil@cisco.com>
+Acked-by: Mike Isely <isely@pobox.com>
+Cc: stable@kernel.org
+Signed-off-by: Mauro Carvalho Chehab <mchehab@redhat.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/media/video/pvrusb2/pvrusb2-hdw.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/media/video/pvrusb2/pvrusb2-hdw.c b/drivers/media/video/pvrusb2/pvrusb2-hdw.c
+index 70ea578..1c07a33 100644
+--- a/drivers/media/video/pvrusb2/pvrusb2-hdw.c
++++ b/drivers/media/video/pvrusb2/pvrusb2-hdw.c
+@@ -3039,6 +3039,8 @@ static void pvr2_subdev_update(struct pvr2_hdw *hdw)
+ 	if (hdw->input_dirty || hdw->audiomode_dirty || hdw->force_dirty) {
+ 		struct v4l2_tuner vt;
+ 		memset(&vt, 0, sizeof(vt));
++		vt.type = (hdw->input_val == PVR2_CVAL_INPUT_RADIO) ?
++			V4L2_TUNER_RADIO : V4L2_TUNER_ANALOG_TV;
+ 		vt.audmode = hdw->audiomode_val;
+ 		v4l2_device_call_all(&hdw->v4l2_dev, 0, tuner, s_tuner, &vt);
+ 	}
+@@ -5163,6 +5165,8 @@ void pvr2_hdw_status_poll(struct pvr2_hdw *hdw)
+ {
+ 	struct v4l2_tuner *vtp = &hdw->tuner_signal_info;
+ 	memset(vtp, 0, sizeof(*vtp));
++	vtp->type = (hdw->input_val == PVR2_CVAL_INPUT_RADIO) ?
++		V4L2_TUNER_RADIO : V4L2_TUNER_ANALOG_TV;
+ 	hdw->tuner_signal_stale = 0;
+ 	/* Note: There apparently is no replacement for VIDIOC_CROPCAP
+ 	   using v4l2-subdev - therefore we can't support that AT ALL right
+-- 
+1.8.1.5
+

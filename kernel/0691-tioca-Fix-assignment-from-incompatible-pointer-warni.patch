@@ -1,0 +1,35 @@
+From 386797ea0e4eb044f6c7433c15d75cb4120f73a7 Mon Sep 17 00:00:00 2001
+From: Jeff Mahoney <jeffm@suse.com>
+Date: Thu, 24 Feb 2011 15:33:24 -0500
+Subject: [PATCH 691/984] tioca: Fix assignment from incompatible pointer
+ warnings
+
+commit b4a6b3436531f6c5256e6d60d388c3c28ff1a0e9 upstream.
+
+The prototype for sn_pci_provider->{dma_map,dma_map_consistent} expects
+an unsigned long instead of a u64.
+
+Signed-off-by: Jeff Mahoney <jeffm@suse.com>
+Signed-off-by: Tony Luck <tony.luck@intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ arch/ia64/sn/pci/tioca_provider.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/ia64/sn/pci/tioca_provider.c b/arch/ia64/sn/pci/tioca_provider.c
+index 4d4536e..9c271be 100644
+--- a/arch/ia64/sn/pci/tioca_provider.c
++++ b/arch/ia64/sn/pci/tioca_provider.c
+@@ -509,7 +509,7 @@ tioca_dma_unmap(struct pci_dev *pdev, dma_addr_t bus_addr, int dir)
+  * use the GART mapped mode.
+  */
+ static u64
+-tioca_dma_map(struct pci_dev *pdev, u64 paddr, size_t byte_count, int dma_flags)
++tioca_dma_map(struct pci_dev *pdev, unsigned long paddr, size_t byte_count, int dma_flags)
+ {
+ 	u64 mapaddr;
+ 
+-- 
+1.8.1.5
+

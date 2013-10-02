@@ -1,0 +1,37 @@
+From af98113010e7815aaa0f4281f6a54bfe0c7bed3d Mon Sep 17 00:00:00 2001
+From: Ken Mills <ken.k.mills@intel.com>
+Date: Mon, 13 Dec 2010 15:28:03 +0000
+Subject: [PATCH 324/984] n_gsm: gsm_data_alloc buffer allocation could fail
+ and it is not being checked
+
+commit 093d804611b9a38fe59753b37c29f840518406a9 upstream.
+
+gsm_data_alloc buffer allocation could fail and it is not being checked.
+
+Add check for allocated buffer and return if the buffer allocation
+fails.
+
+Signed-off-by: Ken Mills <ken.k.mills@intel.com>
+Signed-off-by: Alan Cox <alan@linux.intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/char/n_gsm.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/char/n_gsm.c b/drivers/char/n_gsm.c
+index 3bf4792..a5eeacd 100644
+--- a/drivers/char/n_gsm.c
++++ b/drivers/char/n_gsm.c
+@@ -969,6 +969,8 @@ static void gsm_control_reply(struct gsm_mux *gsm, int cmd, u8 *data,
+ {
+ 	struct gsm_msg *msg;
+ 	msg = gsm_data_alloc(gsm, 0, dlen + 2, gsm->ftype);
++	if (msg == NULL)
++		return;
+ 	msg->data[0] = (cmd & 0xFE) << 1 | EA;	/* Clear C/R */
+ 	msg->data[1] = (dlen << 1) | EA;
+ 	memcpy(msg->data + 2, data, dlen);
+-- 
+1.8.1.5
+

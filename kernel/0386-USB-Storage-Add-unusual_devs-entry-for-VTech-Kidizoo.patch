@@ -1,0 +1,39 @@
+From f522aa8db193529e265a2c090f45757ce5b0e4f3 Mon Sep 17 00:00:00 2001
+From: Nick Holloway <Nick.Holloway@pyrites.org.uk>
+Date: Wed, 26 Jan 2011 21:47:43 +0000
+Subject: [PATCH 386/984] USB: Storage: Add unusual_devs entry for VTech
+ Kidizoom
+
+commit c25f6b1591b158f7ae3b9132367d0fa6d632e70e upstream.
+
+This device suffers from the off-by-one error when reporting the capacity,
+so add entry with US_FL_FIX_CAPACITY.
+
+Signed-off-by: Nick Holloway <Nick.Holloway@pyrites.org.uk>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/usb/storage/unusual_devs.h | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drivers/usb/storage/unusual_devs.h b/drivers/usb/storage/unusual_devs.h
+index bc437a8..b0c0a33 100644
+--- a/drivers/usb/storage/unusual_devs.h
++++ b/drivers/usb/storage/unusual_devs.h
+@@ -1396,6 +1396,13 @@ UNUSUAL_DEV(  0x0f19, 0x0105, 0x0100, 0x0100,
+ 		US_SC_DEVICE, US_PR_DEVICE, NULL,
+ 		US_FL_IGNORE_RESIDUE ),
+ 
++/* Submitted by Nick Holloway */
++UNUSUAL_DEV( 0x0f88, 0x042e, 0x0100, 0x0100,
++		"VTech",
++		"Kidizoom",
++		US_SC_DEVICE, US_PR_DEVICE, NULL,
++		US_FL_FIX_CAPACITY ),
++
+ /* Reported by Michael Stattmann <michael@stattmann.com> */
+ UNUSUAL_DEV(  0x0fce, 0xd008, 0x0000, 0x0000,
+ 		"Sony Ericsson",
+-- 
+1.8.1.5
+

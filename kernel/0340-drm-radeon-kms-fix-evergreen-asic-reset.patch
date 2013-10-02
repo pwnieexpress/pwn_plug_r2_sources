@@ -1,0 +1,63 @@
+From ee8aa621efcdd5dd76a91f0085e1f2dc940cb3b8 Mon Sep 17 00:00:00 2001
+From: Alex Deucher <alexdeucher@gmail.com>
+Date: Mon, 20 Dec 2010 12:35:03 -0500
+Subject: [PATCH 340/984] drm/radeon/kms: fix evergreen asic reset
+
+commit 9f0c4f9c2f835eee1bbb93f96bf9483d56f1892b upstream.
+
+Only reset the grbm blocks, srbm tends to lock the GPU
+if not done properly and in most cases is not necessary.
+Also, no need to call asic init after reset the grbm blocks.
+
+Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+Reviewed-by: Jerome Glisse <jglisse@redhat.com>
+Signed-off-by: Dave Airlie <airlied@redhat.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+ drivers/gpu/drm/radeon/evergreen.c | 15 ---------------
+ 1 file changed, 15 deletions(-)
+
+diff --git a/drivers/gpu/drm/radeon/evergreen.c b/drivers/gpu/drm/radeon/evergreen.c
+index b7e60e5..c500616 100644
+--- a/drivers/gpu/drm/radeon/evergreen.c
++++ b/drivers/gpu/drm/radeon/evergreen.c
+@@ -1406,7 +1406,6 @@ bool evergreen_gpu_is_lockup(struct radeon_device *rdev)
+ static int evergreen_gpu_soft_reset(struct radeon_device *rdev)
+ {
+ 	struct evergreen_mc_save save;
+-	u32 srbm_reset = 0;
+ 	u32 grbm_reset = 0;
+ 
+ 	dev_info(rdev->dev, "GPU softreset \n");
+@@ -1445,16 +1444,6 @@ static int evergreen_gpu_soft_reset(struct radeon_device *rdev)
+ 	udelay(50);
+ 	WREG32(GRBM_SOFT_RESET, 0);
+ 	(void)RREG32(GRBM_SOFT_RESET);
+-
+-	/* reset all the system blocks */
+-	srbm_reset = SRBM_SOFT_RESET_ALL_MASK;
+-
+-	dev_info(rdev->dev, "  SRBM_SOFT_RESET=0x%08X\n", srbm_reset);
+-	WREG32(SRBM_SOFT_RESET, srbm_reset);
+-	(void)RREG32(SRBM_SOFT_RESET);
+-	udelay(50);
+-	WREG32(SRBM_SOFT_RESET, 0);
+-	(void)RREG32(SRBM_SOFT_RESET);
+ 	/* Wait a little for things to settle down */
+ 	udelay(50);
+ 	dev_info(rdev->dev, "  GRBM_STATUS=0x%08X\n",
+@@ -1465,10 +1454,6 @@ static int evergreen_gpu_soft_reset(struct radeon_device *rdev)
+ 		RREG32(GRBM_STATUS_SE1));
+ 	dev_info(rdev->dev, "  SRBM_STATUS=0x%08X\n",
+ 		RREG32(SRBM_STATUS));
+-	/* After reset we need to reinit the asic as GPU often endup in an
+-	 * incoherent state.
+-	 */
+-	atom_asic_init(rdev->mode_info.atom_context);
+ 	evergreen_mc_resume(rdev, &save);
+ 	return 0;
+ }
+-- 
+1.8.1.5
+

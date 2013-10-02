@@ -1,0 +1,55 @@
+From 70501ead1f5f8760d9ec1c3fd7f69cfe62c5f35e Mon Sep 17 00:00:00 2001
+From: Venkatesh Pallipadi <venki@google.com>
+Date: Thu, 10 Feb 2011 10:23:27 +0100
+Subject: [PATCH 460/984] sched: Add a PF flag for ksoftirqd identification
+
+Commit: 6cdd5199daf0cb7b0fcc8dca941af08492612887 upstream
+
+To account softirq time cleanly in scheduler, we need to identify whether
+softirq is invoked in ksoftirqd context or softirq at hardirq tail context.
+Add PF_KSOFTIRQD for that purpose.
+
+As all PF flag bits are currently taken, create space by moving one of the
+infrequently used bits (PF_THREAD_BOUND) down in task_struct to be along
+with some other state fields.
+
+Signed-off-by: Venkatesh Pallipadi <venki@google.com>
+Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+LKML-Reference: <1286237003-12406-4-git-send-email-venki@google.com>
+Signed-off-by: Ingo Molnar <mingo@elte.hu>
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+Acked-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+ include/linux/sched.h | 1 +
+ kernel/softirq.c      | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 251f1ca..0a8beef 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1685,6 +1685,7 @@ extern void thread_group_times(struct task_struct *p, cputime_t *ut, cputime_t *
+ /*
+  * Per process flags
+  */
++#define PF_KSOFTIRQD	0x00000001	/* I am ksoftirqd */
+ #define PF_STARTING	0x00000002	/* being created */
+ #define PF_EXITING	0x00000004	/* getting shut down */
+ #define PF_EXITPIDONE	0x00000008	/* pi exit done on shut down */
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index 988dfbe..267f7b7 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -713,6 +713,7 @@ static int run_ksoftirqd(void * __bind_cpu)
+ {
+ 	set_current_state(TASK_INTERRUPTIBLE);
+ 
++	current->flags |= PF_KSOFTIRQD;
+ 	while (!kthread_should_stop()) {
+ 		preempt_disable();
+ 		if (!local_softirq_pending()) {
+-- 
+1.8.1.5
+

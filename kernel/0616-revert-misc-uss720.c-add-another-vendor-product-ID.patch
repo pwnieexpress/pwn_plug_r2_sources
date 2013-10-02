@@ -1,0 +1,77 @@
+From 40478e1a3440c6b5e0f5fd81133494aefaf11ec2 Mon Sep 17 00:00:00 2001
+From: Chuck Ebbert <cebbert@redhat.com>
+Date: Thu, 31 Mar 2011 11:58:52 -0700
+Subject: [PATCH 616/984] revert misc: uss720.c: add another vendor/product ID
+
+In 2.6.35.10:
+
+[  122.146074] usb 2-1: new full speed USB device using uhci_hcd and address 2
+[  122.325102] usb 2-1: New USB device found, idVendor=050d, idProduct=0002
+[  122.325110] usb 2-1: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[  122.325117] usb 2-1: Product: IEEE-1284 Controller
+[  122.325121] usb 2-1: Manufacturer: Belk USB Printing Support
+[  123.531167] usblp0: USB Bidirectional printer dev 2 if 0 alt 1 proto 2 vid
+0x050D pid 0x0002
+[  123.531208] usbcore: registered new interface driver usblp
+
+In 2.6.35.11:
+
+[ 8046.227051] usb 2-1: new full speed USB device using uhci_hcd and address 6
+[ 8046.408083] usb 2-1: New USB device found, idVendor=050d, idProduct=0002
+[ 8046.408088] usb 2-1: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[ 8046.408092] usb 2-1: Product: IEEE-1284 Controller
+[ 8046.408094] usb 2-1: Manufacturer: Belk USB Printing Support
+[ 8047.552140] get_1284_register timeout
+[ 8047.554102] uss720: async_complete: urb error -104
+[repeats]
+[ 8047.556111] uss720: async_complete: urb error -32
+[sequence repeats]
+[unplug connector]
+[ 8485.688067] parport0: fix this legacy no-device port driver!
+[ 8485.688427] uss720: async_complete: urb error -32
+
+Blacklisting the uss720 driver fixes the problem.
+
+
+From 0a67b7cf26d73ed1dbea7e99d63673b5c4aa479e Mon Sep 17 00:00:00 2001
+From: Thomas Sailer <t.sailer@alumni.ethz.ch>
+Date: Tue, 14 Dec 2010 16:04:05 +0100
+Subject: [PATCH] USB: misc: uss720.c: add another vendor/product ID
+
+commit ecc1624a2fff45780959efbcb73ace18fdb3c58d upstream.
+
+Fabio Battaglia report that he has another cable that works with this
+driver, so this patch adds its vendor/product ID.
+
+Signed-off-by: Thomas Sailer <t.sailer@alumni.ethz.ch>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/usb/misc/uss720.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/drivers/usb/misc/uss720.c b/drivers/usb/misc/uss720.c
+index 9727daa..2380338 100644
+--- a/drivers/usb/misc/uss720.c
++++ b/drivers/usb/misc/uss720.c
+@@ -3,7 +3,7 @@
+ /*
+  *	uss720.c  --  USS720 USB Parport Cable.
+  *
+- *	Copyright (C) 1999, 2005, 2010
++ *	Copyright (C) 1999, 2005
+  *	    Thomas Sailer (t.sailer@alumni.ethz.ch)
+  *
+  *	This program is free software; you can redistribute it and/or modify
+@@ -775,8 +775,6 @@ static const struct usb_device_id uss720_table[] = {
+ 	{ USB_DEVICE(0x0557, 0x2001) },
+ 	{ USB_DEVICE(0x0729, 0x1284) },
+ 	{ USB_DEVICE(0x1293, 0x0002) },
+-	{ USB_DEVICE(0x1293, 0x0002) },
+-	{ USB_DEVICE(0x050d, 0x0002) },
+ 	{ }						/* Terminating entry */
+ };
+ 
+-- 
+1.8.1.5
+

@@ -1,0 +1,53 @@
+From ae364158077225260dced4bf5f39db8c8c1289db Mon Sep 17 00:00:00 2001
+From: Marcelo Tosatti <mtosatti@redhat.com>
+Date: Thu, 31 Mar 2011 11:58:55 -0700
+Subject: [PATCH 628/984] Revert "KVM: Correct ordering of ldt reload wrt fs/gs
+ reload"
+
+This reverts commit d3f813da18f83a31f2678988b450e6a1c94c95ed.
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ arch/x86/kvm/svm.c | 2 +-
+ arch/x86/kvm/vmx.c | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/arch/x86/kvm/svm.c b/arch/x86/kvm/svm.c
+index 9ca7032..02a5603 100644
+--- a/arch/x86/kvm/svm.c
++++ b/arch/x86/kvm/svm.c
+@@ -3184,9 +3184,9 @@ static void svm_vcpu_run(struct kvm_vcpu *vcpu)
+ 	vcpu->arch.regs[VCPU_REGS_RSP] = svm->vmcb->save.rsp;
+ 	vcpu->arch.regs[VCPU_REGS_RIP] = svm->vmcb->save.rip;
+ 
+-	kvm_load_ldt(ldt_selector);
+ 	kvm_load_fs(fs_selector);
+ 	kvm_load_gs(gs_selector);
++	kvm_load_ldt(ldt_selector);
+ 	load_host_msrs(vcpu);
+ 
+ 	reload_tss(vcpu);
+diff --git a/arch/x86/kvm/vmx.c b/arch/x86/kvm/vmx.c
+index 39ac456..7d04388 100644
+--- a/arch/x86/kvm/vmx.c
++++ b/arch/x86/kvm/vmx.c
+@@ -791,6 +791,8 @@ static void __vmx_load_host_state(struct vcpu_vmx *vmx)
+ 
+ 	++vmx->vcpu.stat.host_state_reload;
+ 	vmx->host_state.loaded = 0;
++	if (vmx->host_state.fs_reload_needed)
++		kvm_load_fs(vmx->host_state.fs_sel);
+ 	if (vmx->host_state.gs_ldt_reload_needed) {
+ 		kvm_load_ldt(vmx->host_state.ldt_sel);
+ 		/*
+@@ -804,8 +806,6 @@ static void __vmx_load_host_state(struct vcpu_vmx *vmx)
+ #endif
+ 		local_irq_restore(flags);
+ 	}
+-	if (vmx->host_state.fs_reload_needed)
+-		loadsegment(fs, vmx->host_state.fs_sel);
+ 	reload_tss();
+ #ifdef CONFIG_X86_64
+ 	if (is_long_mode(&vmx->vcpu)) {
+-- 
+1.8.1.5
+

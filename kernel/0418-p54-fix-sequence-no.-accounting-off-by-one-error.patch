@@ -1,0 +1,41 @@
+From c8ff6363cfcfe2192cc45c14bfda8b99431aa65f Mon Sep 17 00:00:00 2001
+From: Christian Lamparter <chunkeey@googlemail.com>
+Date: Thu, 6 Jan 2011 23:47:52 +0100
+Subject: [PATCH 418/984] p54: fix sequence no. accounting off-by-one error
+
+commit 3b5c5827d1f80ad8ae844a8b1183f59ddb90fe25 upstream.
+
+P54_HDR_FLAG_DATA_OUT_SEQNR is meant to tell the
+firmware that "the frame's sequence number has
+already been set by the application."
+
+Whereas IEEE80211_TX_CTL_ASSIGN_SEQ is set for
+frames which lack a valid sequence number and
+either the driver or firmware has to assign one.
+
+Yup, it's the exact opposite!
+
+Signed-off-by: Christian Lamparter <chunkeey@googlemail.com>
+Signed-off-by: John W. Linville <linville@tuxdriver.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/net/wireless/p54/txrx.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/p54/txrx.c b/drivers/net/wireless/p54/txrx.c
+index ccb2dd1..9ad0f5f 100644
+--- a/drivers/net/wireless/p54/txrx.c
++++ b/drivers/net/wireless/p54/txrx.c
+@@ -616,7 +616,7 @@ static void p54_tx_80211_header(struct p54_common *priv, struct sk_buff *skb,
+ 	else
+ 		*burst_possible = false;
+ 
+-	if (info->flags & IEEE80211_TX_CTL_ASSIGN_SEQ)
++	if (!(info->flags & IEEE80211_TX_CTL_ASSIGN_SEQ))
+ 		*flags |= P54_HDR_FLAG_DATA_OUT_SEQNR;
+ 
+ 	if (info->flags & IEEE80211_TX_CTL_PSPOLL_RESPONSE)
+-- 
+1.8.1.5
+

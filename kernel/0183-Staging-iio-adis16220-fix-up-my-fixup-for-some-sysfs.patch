@@ -1,0 +1,36 @@
+From 7e9c5c7682a9c821919210b036b3d3779ad06d8f Mon Sep 17 00:00:00 2001
+From: Greg Kroah-Hartman <gregkh@suse.de>
+Date: Thu, 18 Nov 2010 11:21:04 -0800
+Subject: [PATCH 183/984] Staging: iio: adis16220: fix up my fixup for some
+ sysfs attribute permissions
+
+commit c9e51d9e4bee3da47623622884f4828e079a0581 upstream.
+
+They should be writable by root, not readable.
+Doh, stupid me with the wrong flags.
+
+Reported-by: Jonathan Cameron <jic23@cam.ac.uk>
+Acked-by: Jonathan Cameron <jic23@cam.ac.uk>
+Cc: Barry Song <Barry.Song@analog.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/staging/iio/accel/adis16220_core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/staging/iio/accel/adis16220_core.c b/drivers/staging/iio/accel/adis16220_core.c
+index 083c362..92bdb82 100644
+--- a/drivers/staging/iio/accel/adis16220_core.c
++++ b/drivers/staging/iio/accel/adis16220_core.c
+@@ -506,7 +506,7 @@ static IIO_DEVICE_ATTR(reset, S_IWUSR, NULL,
+ 		adis16220_write_reset, 0);
+ 
+ #define IIO_DEV_ATTR_CAPTURE(_store)				\
+-	IIO_DEVICE_ATTR(capture, S_IRUSR, NULL, _store, 0)
++	IIO_DEVICE_ATTR(capture, S_IWUSR, NULL, _store, 0)
+ 
+ static IIO_DEV_ATTR_CAPTURE(adis16220_write_capture);
+ 
+-- 
+1.8.1.5
+

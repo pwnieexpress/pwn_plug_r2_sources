@@ -1,0 +1,97 @@
+From b3b49f6609e293e8a9d17f24911a2dc771ee3679 Mon Sep 17 00:00:00 2001
+From: "Rafael J. Wysocki" <rjw@sisk.pl>
+Date: Mon, 20 Sep 2010 19:44:56 +0200
+Subject: [PATCH 612/984] PM / Hibernate: Make default image size depend on
+ total RAM size
+
+[ upstream commit ac5c24ec1e983313ef0015258fba6f630e54e7cf ]
+
+The default hibernation image size is currently hard coded and euqal
+to 500 MB, which is not a reasonable default on many contemporary
+systems.  Make it equal 2/5 of the total RAM size (this is slightly
+below the maximum, i.e. 1/2 of the total RAM size, and seems to be
+generally suitable).
+
+Signed-off-by: Rafael J. Wysocki <rjw@sisk.pl>
+Tested-by: M. Vefa Bicakci <bicave@superonline.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ Documentation/power/interface.txt | 2 +-
+ kernel/power/main.c               | 1 +
+ kernel/power/power.h              | 9 ++++++++-
+ kernel/power/snapshot.c           | 7 ++++++-
+ 4 files changed, 16 insertions(+), 3 deletions(-)
+
+diff --git a/Documentation/power/interface.txt b/Documentation/power/interface.txt
+index e67211f..c537834 100644
+--- a/Documentation/power/interface.txt
++++ b/Documentation/power/interface.txt
+@@ -57,7 +57,7 @@ smallest image possible.  In particular, if "0" is written to this file, the
+ suspend image will be as small as possible.
+ 
+ Reading from this file will display the current image size limit, which
+-is set to 500 MB by default.
++is set to 2/5 of available RAM by default.
+ 
+ /sys/power/pm_trace controls the code which saves the last PM event point in
+ the RTC across reboots, so that you can debug a machine that just hangs
+diff --git a/kernel/power/main.c b/kernel/power/main.c
+index b58800b..51e2643 100644
+--- a/kernel/power/main.c
++++ b/kernel/power/main.c
+@@ -266,6 +266,7 @@ static int __init pm_init(void)
+ 	int error = pm_start_workqueue();
+ 	if (error)
+ 		return error;
++	hibernate_image_size_init();
+ 	power_kobj = kobject_create_and_add("power", NULL);
+ 	if (!power_kobj)
+ 		return -ENOMEM;
+diff --git a/kernel/power/power.h b/kernel/power/power.h
+index 006270f..54580cb 100644
+--- a/kernel/power/power.h
++++ b/kernel/power/power.h
+@@ -14,6 +14,9 @@ struct swsusp_info {
+ } __attribute__((aligned(PAGE_SIZE)));
+ 
+ #ifdef CONFIG_HIBERNATION
++/* kernel/power/snapshot.c */
++extern void __init hibernate_image_size_init(void);
++
+ #ifdef CONFIG_ARCH_HIBERNATION_HEADER
+ /* Maximum size of architecture specific data in a hibernation header */
+ #define MAX_ARCH_HEADER_SIZE	(sizeof(struct new_utsname) + 4)
+@@ -49,7 +52,11 @@ static inline char *check_image_kernel(struct swsusp_info *info)
+ extern int hibernation_snapshot(int platform_mode);
+ extern int hibernation_restore(int platform_mode);
+ extern int hibernation_platform_enter(void);
+-#endif
++
++#else /* !CONFIG_HIBERNATION */
++
++static inline void hibernate_image_size_init(void) {}
++#endif /* !CONFIG_HIBERNATION */
+ 
+ extern int pfn_is_nosave(unsigned long);
+ 
+diff --git a/kernel/power/snapshot.c b/kernel/power/snapshot.c
+index f2f61fa..4d8548d 100644
+--- a/kernel/power/snapshot.c
++++ b/kernel/power/snapshot.c
+@@ -46,7 +46,12 @@ static void swsusp_unset_page_forbidden(struct page *);
+  * size will not exceed N bytes, but if that is impossible, it will
+  * try to create the smallest image possible.
+  */
+-unsigned long image_size = 500 * 1024 * 1024;
++unsigned long image_size;
++
++void __init hibernate_image_size_init(void)
++{
++	image_size = ((totalram_pages * 2) / 5) * PAGE_SIZE;
++}
+ 
+ /* List of PBEs needed for restoring the pages that were allocated before
+  * the suspend and included in the suspend image, but have also been
+-- 
+1.8.1.5
+

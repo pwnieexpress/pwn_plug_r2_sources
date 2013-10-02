@@ -1,0 +1,51 @@
+From ca62683d3b5f66f89e8b85ff2329cb1794d6c04c Mon Sep 17 00:00:00 2001
+From: Joe Perches <joe@perches.com>
+Date: Sat, 21 May 2011 07:48:39 +0000
+Subject: [PATCH 922/984] bug.h: Add WARN_RATELIMIT
+
+[ Upstream commit b3eec79b0776e5340a3db75b34953977c7e5086e ]
+
+Add a generic mechanism to ratelimit WARN(foo, fmt, ...) messages
+using a hidden per call site static struct ratelimit_state.
+
+Also add an __WARN_RATELIMIT variant to be able to use a specific
+struct ratelimit_state.
+
+Signed-off-by: Joe Perches <joe@perches.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ include/asm-generic/bug.h | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/include/asm-generic/bug.h b/include/asm-generic/bug.h
+index c2c9ba0..205e167 100644
+--- a/include/asm-generic/bug.h
++++ b/include/asm-generic/bug.h
+@@ -53,6 +53,22 @@ struct bug_entry {
+ #define BUG_ON(condition) do { if (unlikely(condition)) BUG(); } while(0)
+ #endif
+ 
++#define __WARN_RATELIMIT(condition, state, format...)		\
++({								\
++	int rtn = 0;						\
++	if (unlikely(__ratelimit(state)))			\
++		rtn = WARN(condition, format);			\
++	rtn;							\
++})
++
++#define WARN_RATELIMIT(condition, format...)			\
++({								\
++	static DEFINE_RATELIMIT_STATE(_rs,			\
++				      DEFAULT_RATELIMIT_INTERVAL,	\
++				      DEFAULT_RATELIMIT_BURST);	\
++	__WARN_RATELIMIT(condition, &_rs, format);		\
++})
++
+ /*
+  * WARN(), WARN_ON(), WARN_ON_ONCE, and so on can be used to report
+  * significant issues that need prompt attention if they should ever
+-- 
+1.8.1.5
+

@@ -1,0 +1,38 @@
+From 0dc54b12b37bb287ec4ef606ed3cc346b818e682 Mon Sep 17 00:00:00 2001
+From: Liu Yuan <tailai.ly@taobao.com>
+Date: Tue, 19 Apr 2011 13:47:58 +0200
+Subject: [PATCH 716/984] block, blk-sysfs: Fix an err return path in
+ blk_register_queue()
+
+commit ed5302d3c25006a9edc7a7fbea97a30483f89ef7 upstream.
+
+We do not call blk_trace_remove_sysfs() in err return path
+if kobject_add() fails. This path fixes it.
+
+Signed-off-by: Liu Yuan <tailai.ly@taobao.com>
+Signed-off-by: Jens Axboe <jaxboe@fusionio.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ block/blk-sysfs.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+index d246654..3eede79 100644
+--- a/block/blk-sysfs.c
++++ b/block/blk-sysfs.c
+@@ -502,8 +502,10 @@ int blk_register_queue(struct gendisk *disk)
+ 		return ret;
+ 
+ 	ret = kobject_add(&q->kobj, kobject_get(&dev->kobj), "%s", "queue");
+-	if (ret < 0)
++	if (ret < 0) {
++		blk_trace_remove_sysfs(dev);
+ 		return ret;
++	}
+ 
+ 	kobject_uevent(&q->kobj, KOBJ_ADD);
+ 
+-- 
+1.8.1.5
+

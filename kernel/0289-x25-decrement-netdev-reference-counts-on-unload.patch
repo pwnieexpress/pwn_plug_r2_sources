@@ -1,0 +1,39 @@
+From 0ead25e6311a5b894daf6dae9a9734a3262f8f89 Mon Sep 17 00:00:00 2001
+From: Apollon Oikonomopoulos <apollon@noc.grnet.gr>
+Date: Tue, 7 Dec 2010 09:43:30 +0000
+Subject: [PATCH 289/984] x25: decrement netdev reference counts on unload
+
+[ Upstream commit 171995e5d82dcc92bea37a7d2a2ecc21068a0f19]
+
+x25 does not decrement the network device reference counts on module unload.
+Thus unregistering any pre-existing interface after unloading the x25 module
+hangs and results in
+
+ unregister_netdevice: waiting for tap0 to become free. Usage count = 1
+
+This patch decrements the reference counts of all interfaces in x25_link_free,
+the way it is already done in x25_link_device_down for NETDEV_DOWN events.
+
+Signed-off-by: Apollon Oikonomopoulos <apollon@noc.grnet.gr>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/x25/x25_link.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/net/x25/x25_link.c b/net/x25/x25_link.c
+index 73e7b95..b25c646 100644
+--- a/net/x25/x25_link.c
++++ b/net/x25/x25_link.c
+@@ -394,6 +394,7 @@ void __exit x25_link_free(void)
+ 	list_for_each_safe(entry, tmp, &x25_neigh_list) {
+ 		nb = list_entry(entry, struct x25_neigh, node);
+ 		__x25_remove_neigh(nb);
++		dev_put(nb->dev);
+ 	}
+ 	write_unlock_bh(&x25_neigh_list_lock);
+ }
+-- 
+1.8.1.5
+

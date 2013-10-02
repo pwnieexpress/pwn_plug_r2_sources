@@ -1,0 +1,37 @@
+From 7d7fcb84736f7be2552c796047b69fb0dc46ea75 Mon Sep 17 00:00:00 2001
+From: Stefan Haberland <stefan.haberland@de.ibm.com>
+Date: Thu, 17 Feb 2011 13:13:55 +0100
+Subject: [PATCH 728/984] dasd: correct device table
+
+commit 5da24b7627ff821e154a3aaecd5d60e1d8e228a5 upstream.
+
+The 3880 storage control unit supports a 3380 device
+type, but not a 3390 device type.
+
+Reported-by: Stephen Powell <zlinuxman@wowway.com>
+Signed-off-by: Stefan Haberland <stefan.haberland@de.ibm.com>
+Signed-off-by: Martin Schwidefsky <schwidefsky@de.ibm.com>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+Cc: Stephen Powell <zlinuxman@wowway.com>
+Cc: Jonathan Nieder <jrnieder@gmail.com>
+Cc: Bastian Blank <waldi@debian.org>
+---
+ drivers/s390/block/dasd_eckd.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/s390/block/dasd_eckd.c b/drivers/s390/block/dasd_eckd.c
+index ab84da5..06f249b 100644
+--- a/drivers/s390/block/dasd_eckd.c
++++ b/drivers/s390/block/dasd_eckd.c
+@@ -63,7 +63,7 @@ static struct dasd_discipline dasd_eckd_discipline;
+ static struct ccw_device_id dasd_eckd_ids[] = {
+ 	{ CCW_DEVICE_DEVTYPE (0x3990, 0, 0x3390, 0), .driver_info = 0x1},
+ 	{ CCW_DEVICE_DEVTYPE (0x2105, 0, 0x3390, 0), .driver_info = 0x2},
+-	{ CCW_DEVICE_DEVTYPE (0x3880, 0, 0x3390, 0), .driver_info = 0x3},
++	{ CCW_DEVICE_DEVTYPE (0x3880, 0, 0x3380, 0), .driver_info = 0x3},
+ 	{ CCW_DEVICE_DEVTYPE (0x3990, 0, 0x3380, 0), .driver_info = 0x4},
+ 	{ CCW_DEVICE_DEVTYPE (0x2105, 0, 0x3380, 0), .driver_info = 0x5},
+ 	{ CCW_DEVICE_DEVTYPE (0x9343, 0, 0x9345, 0), .driver_info = 0x6},
+-- 
+1.8.1.5
+

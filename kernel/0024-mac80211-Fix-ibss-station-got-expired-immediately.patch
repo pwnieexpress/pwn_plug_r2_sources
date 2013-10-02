@@ -1,0 +1,34 @@
+From 1416ef9a67f443b26bb9b9498ca14351616eedac Mon Sep 17 00:00:00 2001
+From: Rajkumar Manoharan <rmanoharan@atheros.com>
+Date: Sat, 23 Oct 2010 10:59:57 +0530
+Subject: [PATCH 024/984] mac80211: Fix ibss station got expired immediately
+
+commit c8716d9dc13c7f6ee92f2bfc6cc3b723b417bff8 upstream.
+
+Station addition in ieee80211_ibss_rx_queued_mgmt is not updating
+sta->last_rx which is causing station expiry in ieee80211_ibss_work
+path. So sta addition and deletion happens repeatedly.
+
+Signed-off-by: Rajkumar Manoharan <rmanoharan@atheros.com>
+Signed-off-by: John W. Linville <linville@tuxdriver.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ net/mac80211/ibss.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/net/mac80211/ibss.c b/net/mac80211/ibss.c
+index b2cc1fd..c429878 100644
+--- a/net/mac80211/ibss.c
++++ b/net/mac80211/ibss.c
+@@ -427,6 +427,7 @@ struct sta_info *ieee80211_ibss_add_sta(struct ieee80211_sub_if_data *sdata,
+ 	if (!sta)
+ 		return NULL;
+ 
++	sta->last_rx = jiffies;
+ 	set_sta_flags(sta, WLAN_STA_AUTHORIZED);
+ 
+ 	/* make sure mandatory rates are always added */
+-- 
+1.8.1.5
+

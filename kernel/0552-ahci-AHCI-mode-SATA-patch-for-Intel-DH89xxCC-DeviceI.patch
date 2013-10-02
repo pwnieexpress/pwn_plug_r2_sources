@@ -1,0 +1,33 @@
+From 9af7029b95687b78d8529aad52945acc9fc04912 Mon Sep 17 00:00:00 2001
+From: Seth Heasley <seth.heasley@intel.com>
+Date: Mon, 10 Jan 2011 12:57:17 -0800
+Subject: [PATCH 552/984] ahci: AHCI mode SATA patch for Intel DH89xxCC
+ DeviceIDs
+
+commit a4a461a6df6c0481d5a3d61660ed97f5b539cf16 upstream.
+
+This patch adds the AHCI-mode SATA DeviceID for the Intel DH89xxCC PCH.
+
+Signed-off-by: Seth Heasley <seth.heasley@intel.com>
+Signed-off-by: Jeff Garzik <jgarzik@redhat.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/ata/ahci.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/ata/ahci.c b/drivers/ata/ahci.c
+index e2f40f9..d988616 100644
+--- a/drivers/ata/ahci.c
++++ b/drivers/ata/ahci.c
+@@ -251,6 +251,7 @@ static const struct pci_device_id ahci_pci_tbl[] = {
+ 	{ PCI_VDEVICE(INTEL, 0x1d02), board_ahci }, /* PBG AHCI */
+ 	{ PCI_VDEVICE(INTEL, 0x1d04), board_ahci }, /* PBG RAID */
+ 	{ PCI_VDEVICE(INTEL, 0x1d06), board_ahci }, /* PBG RAID */
++	{ PCI_VDEVICE(INTEL, 0x2323), board_ahci }, /* DH89xxCC AHCI */
+ 
+ 	/* JMicron 360/1/3/5/6, match class to avoid IDE function */
+ 	{ PCI_VENDOR_ID_JMICRON, PCI_ANY_ID, PCI_ANY_ID, PCI_ANY_ID,
+-- 
+1.8.1.5
+

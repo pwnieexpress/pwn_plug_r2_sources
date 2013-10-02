@@ -1,0 +1,52 @@
+From d4df7c4751eefc0130f4f8bdf396a4ea16876dd4 Mon Sep 17 00:00:00 2001
+From: James Bottomley <James.Bottomley@HansenPartnership.com>
+Date: Wed, 25 May 2011 15:52:14 -0500
+Subject: [PATCH 873/984] Fix oops caused by queue refcounting failure
+
+commit e73e079bf128d68284efedeba1fbbc18d78610f9 upstream.
+
+In certain circumstances, we can get an oops from a torn down device.
+Most notably this is from CD roms trying to call scsi_ioctl.  The root
+cause of the problem is the fact that after scsi_remove_device() has
+been called, the queue is fully torn down.  This is actually wrong
+since the queue can be used until the sdev release function is called.
+Therefore, we add an extra reference to the queue which is released in
+sdev->release, so the queue always exists.
+
+Reported-by: Parag Warudkar <parag.lkml@gmail.com>
+Signed-off-by: James Bottomley <jbottomley@parallels.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/scsi/scsi_scan.c  | 2 +-
+ drivers/scsi/scsi_sysfs.c | 1 +
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/scsi/scsi_scan.c b/drivers/scsi/scsi_scan.c
+index 1c027a9..6765188 100644
+--- a/drivers/scsi/scsi_scan.c
++++ b/drivers/scsi/scsi_scan.c
+@@ -295,7 +295,7 @@ static struct scsi_device *scsi_alloc_sdev(struct scsi_target *starget,
+ 		kfree(sdev);
+ 		goto out;
+ 	}
+-
++	blk_get_queue(sdev->request_queue);
+ 	sdev->request_queue->queuedata = sdev;
+ 	scsi_adjust_queue_depth(sdev, 0, sdev->host->cmd_per_lun);
+ 
+diff --git a/drivers/scsi/scsi_sysfs.c b/drivers/scsi/scsi_sysfs.c
+index 2b265a1..0ed2365 100644
+--- a/drivers/scsi/scsi_sysfs.c
++++ b/drivers/scsi/scsi_sysfs.c
+@@ -319,6 +319,7 @@ static void scsi_device_dev_release_usercontext(struct work_struct *work)
+ 		kfree(evt);
+ 	}
+ 
++	blk_put_queue(sdev->request_queue);
+ 	/* NULL queue means the device can't be used */
+ 	sdev->request_queue = NULL;
+ 
+-- 
+1.8.1.5
+

@@ -1,0 +1,33 @@
+From 9c1f7a93bff756565bcb4e1b992541cb776f24d2 Mon Sep 17 00:00:00 2001
+From: Luca Tettamanti <kronos.it@gmail.com>
+Date: Sun, 17 Jul 2011 18:39:18 +0200
+Subject: [PATCH 950/984] hwmon: (asus_atk0110) Fix memory leak
+
+[ upstream commit 0b8e77f12cb6bfe2e5a67f2cdc8c7af23abc4ccf ]
+
+The object returned by atk_gitm is dynamically allocated and must be
+freed.
+
+Signed-off-by: Luca Tettamanti <kronos.it@gmail.com>
+Signed-off-by: Jean Delvare <khali@linux-fr.org>
+Cc: stable@kernel.org
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/hwmon/asus_atk0110.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/hwmon/asus_atk0110.c b/drivers/hwmon/asus_atk0110.c
+index 653db1b..df17705 100644
+--- a/drivers/hwmon/asus_atk0110.c
++++ b/drivers/hwmon/asus_atk0110.c
+@@ -655,6 +655,7 @@ static int atk_debugfs_gitm_get(void *p, u64 *val)
+ 	else
+ 		err = -EIO;
+ 
++	ACPI_FREE(ret);
+ 	return err;
+ }
+ 
+-- 
+1.8.1.5
+

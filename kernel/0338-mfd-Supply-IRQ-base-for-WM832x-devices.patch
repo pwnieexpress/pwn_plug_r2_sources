@@ -1,0 +1,34 @@
+From 87e27023b169b23410b59e24e579d8d9d55136a8 Mon Sep 17 00:00:00 2001
+From: Mark Brown <broonie@opensource.wolfsonmicro.com>
+Date: Wed, 24 Nov 2010 18:01:39 +0000
+Subject: [PATCH 338/984] mfd: Supply IRQ base for WM832x devices
+
+commit bd7c72ed18d719c1fb0fdf6ff9042d8ab78fdf71 upstream.
+
+Without this the IRQ base will not be correctly configured for the
+subdevices.
+
+Signed-off-by: Mark Brown <broonie@opensource.wolfsonmicro.com>
+Signed-off-by: Samuel Ortiz <sameo@linux.intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ drivers/mfd/wm831x-core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/mfd/wm831x-core.c b/drivers/mfd/wm831x-core.c
+index 8d7182e..0f87572 100644
+--- a/drivers/mfd/wm831x-core.c
++++ b/drivers/mfd/wm831x-core.c
+@@ -1608,7 +1608,7 @@ static int wm831x_device_init(struct wm831x *wm831x, unsigned long id, int irq)
+ 	case WM8320:
+ 		ret = mfd_add_devices(wm831x->dev, -1,
+ 				      wm8320_devs, ARRAY_SIZE(wm8320_devs),
+-				      NULL, 0);
++				      NULL, wm831x->irq_base);
+ 		break;
+ 
+ 	default:
+-- 
+1.8.1.5
+

@@ -1,0 +1,82 @@
+From 8391972fad7fa9ecce49fe70872ca7e3817361b9 Mon Sep 17 00:00:00 2001
+From: Roland McGrath <roland@redhat.com>
+Date: Tue, 26 Oct 2010 14:22:19 -0700
+Subject: [PATCH 919/984] uml: fix CONFIG_STATIC_LINK=y build failure with
+ newer glibc
+
+commit aa5fb4dbfd121296ca97c68cf90043a7ea97579d upstream.
+
+With glibc 2.11 or later that was built with --enable-multi-arch, the UML
+link fails with undefined references to __rel_iplt_start and similar
+symbols.  In recent binutils, the default linker script defines these
+symbols (see ld --verbose).  Fix the UML linker scripts to match the new
+defaults for these sections.
+
+Signed-off-by: Roland McGrath <roland@redhat.com>
+Cc: Jeff Dike <jdike@addtoit.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ arch/um/kernel/dyn.lds.S | 14 ++++++++++++--
+ arch/um/kernel/uml.lds.S | 17 +++++++++++++++++
+ 2 files changed, 29 insertions(+), 2 deletions(-)
+
+diff --git a/arch/um/kernel/dyn.lds.S b/arch/um/kernel/dyn.lds.S
+index 6926801..a3cab6d 100644
+--- a/arch/um/kernel/dyn.lds.S
++++ b/arch/um/kernel/dyn.lds.S
+@@ -50,8 +50,18 @@ SECTIONS
+   .rela.got       : { *(.rela.got) }
+   .rel.bss        : { *(.rel.bss .rel.bss.* .rel.gnu.linkonce.b.*) }
+   .rela.bss       : { *(.rela.bss .rela.bss.* .rela.gnu.linkonce.b.*) }
+-  .rel.plt        : { *(.rel.plt) }
+-  .rela.plt       : { *(.rela.plt) }
++  .rel.plt : {
++	*(.rel.plt)
++	PROVIDE_HIDDEN(__rel_iplt_start = .);
++	*(.rel.iplt)
++	PROVIDE_HIDDEN(__rel_iplt_end = .);
++  }
++  .rela.plt : {
++	*(.rela.plt)
++	PROVIDE_HIDDEN(__rela_iplt_start = .);
++	*(.rela.iplt)
++	PROVIDE_HIDDEN(__rela_iplt_end = .);
++  }
+   .init           : {
+     KEEP (*(.init))
+   } =0x90909090
+diff --git a/arch/um/kernel/uml.lds.S b/arch/um/kernel/uml.lds.S
+index 9a873d7..fbd9940 100644
+--- a/arch/um/kernel/uml.lds.S
++++ b/arch/um/kernel/uml.lds.S
+@@ -43,6 +43,23 @@ SECTIONS
+ 	__syscall_stub_end = .;
+   }
+ 
++  /*
++   * These are needed even in a static link, even if they wind up being empty.
++   * Newer glibc needs these __rel{,a}_iplt_{start,end} symbols.
++   */
++  .rel.plt : {
++	*(.rel.plt)
++	PROVIDE_HIDDEN(__rel_iplt_start = .);
++	*(.rel.iplt)
++	PROVIDE_HIDDEN(__rel_iplt_end = .);
++  }
++  .rela.plt : {
++	*(.rela.plt)
++	PROVIDE_HIDDEN(__rela_iplt_start = .);
++	*(.rela.iplt)
++	PROVIDE_HIDDEN(__rela_iplt_end = .);
++  }
++
+   #include "asm/common.lds.S"
+ 
+   init.data : { INIT_DATA }
+-- 
+1.8.1.5
+
