@@ -17,6 +17,9 @@ Once built, simply run
 find ./ | grep ko$ | xargs tar cvjf ../wireless-compat_modules-2.6.35.14-3.10.tar.bz2
 
 mkdir /ROOTFSPATH/lib/modules/2.6.35.14/updates
+
 tar -xovf ../wireless-compat_modules-2.6.35.14-3.10.tar.bz2 -C /ROOTFSPATH/lib/modules/2.6.35.14/updates
+
 cp udev/50-compat_firmware.rules /ROOTFSPATH/etc/udev/rules.d
+
 cp udev/compat_firmware.sh /ROOTFSPATH/lib/udev/
